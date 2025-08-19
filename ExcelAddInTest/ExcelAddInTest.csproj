@@ -247,6 +247,7 @@
     <EmbeddedResource Include="Ribbon1.resx">
       <DependentUpon>Ribbon1.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="ExcelAddInTest_1_TemporaryKey.pfx" />
     <None Include="ExcelAddInTest_TemporaryKey.pfx" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -282,10 +283,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ExcelAddInTest_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>ExcelAddInTest_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>6EA7654DB90B5F1618FEE0A7BD030C8D693F0230</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>A06397763732F8A5DA66C2F1C551E085E20A961D</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
