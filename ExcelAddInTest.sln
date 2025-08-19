@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelAddInTest", "ExcelAddInTest\ExcelAddInTest.csproj", "{0465AA74-0E90-4442-B37A-71236EF27688}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Debug|x64.ActiveCfg = Debug|x64
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Debug|x64.Build.0 = Debug|x64
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Release|x64.ActiveCfg = Release|x64
+		{0465AA74-0E90-4442-B37A-71236EF27688}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FD6136F9-33D5-45ED-B82B-44AEACD27C8D}
+	EndGlobalSection
+EndGlobal
