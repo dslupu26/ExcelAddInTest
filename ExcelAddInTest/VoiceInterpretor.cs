@@ -1,4 +1,5 @@
 ﻿using Microsoft.CognitiveServices.Speech;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -8,56 +9,127 @@ namespace ExcelAddInTest
     public class VoiceInterpretor
     {
         private SpeechRecognizer recognizer;
-        string speechKey = "8yZ5oIsWR4zIAurWr2vz5ORVw6gqNLD8PlgnaqDJpzNyJwUhR5XAJQQJ99BHAC5RqLJXJ3w3AAAYACOGHeQu";
-        string speechRegion = "westeurope";
+        string speechKey = Config.SpeechKey;
+        string speechRegion = Config.SpeechRegion;
 
+        private CluService _clu; //variabila privata pentru serviciul CLU
+        public VoiceInterpretor(CluService clu)
+        {
+            _clu = clu; //injectam clu prin constructor
+        }
 
         public async Task VoiceToExcelAsync()
         {
-            var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
-            config.SpeechRecognitionLanguage = "en-US";
-
-            recognizer = new SpeechRecognizer(config);
-
-            recognizer.Recognizing += (s, e) =>
+            try
             {
-                Globals.Ribbons.Ribbon1.speechBox.Text = e.Result.Text;
-            };
+                Globals.ThisAddIn.AppendToPane("[Speech] starting…");
 
-            recognizer.Recognized += (s, e) =>
-            {
-                Globals.Ribbons.Ribbon1.speechBox.Text = e.Result.Text;
-            };
+                var config = SpeechConfig.FromSubscription(Config.SpeechKey, Config.SpeechRegion);
+                config.SpeechRecognitionLanguage = Config.SpeechLanguage;   // "en-US"
 
-            recognizer.Canceled += (s, e) =>
-            {
-                System.Windows.Forms.MessageBox.Show($"Canceled: {e.Reason}");
-            };
+                recognizer = new SpeechRecognizer(config /*, audio*/);
 
-            recognizer.SessionStopped += (s, e) =>
-            {
-                System.Windows.Forms.MessageBox.Show("Speech not recognized. Please try again.");
-            };
+                // ——— LOG ALL EVENTS ———
+                recognizer.SessionStarted += (s, e) =>
+                    Globals.ThisAddIn.AppendToPane("[Speech] SessionStarted");
+                recognizer.SessionStopped += (s, e) =>
+                    Globals.ThisAddIn.AppendToPane("[Speech] SessionStopped");
 
-            await recognizer.StartContinuousRecognitionAsync();
+                recognizer.SpeechStartDetected += (s, e) =>
+                    Globals.ThisAddIn.AppendToPane("[Speech] SpeechStartDetected");
+                recognizer.SpeechEndDetected += (s, e) =>
+                    Globals.ThisAddIn.AppendToPane("[Speech] SpeechEndDetected");
 
+                recognizer.Recognizing += (s, e) =>
+                {
+                    if (e.Result.Reason == ResultReason.RecognizingSpeech)
+                        Globals.ThisAddIn.AppendToPane("[Speech] Recognizing: " + e.Result.Text);
+                };
 
-            // System.Windows.Forms.MessageBox.Show("Please speak your command for Excel.");
-            /*var result = await recognizer.RecognizeOnceAsync();
+                recognizer.Recognized += async (s, e) =>
+                {
+                    Globals.ThisAddIn.AppendToPane("[Speech] Recognized reason: " + e.Result.Reason);
+                    if (e.Result.Reason == ResultReason.RecognizedSpeech)
+                    {
+                        string text = e.Result.Text;
+                        Globals.ThisAddIn.AppendToPane("[Speech] Final: " + text);
 
-            if (result.Reason == ResultReason.RecognizedSpeech)
-            {
-                string text = result.Text;
-                // System.Windows.Forms.MessageBox.Show($"You said: {text}");
+                        // (opțional) trimit la CLU
+                        try
+                        {
+                            var nlu = await _clu.AnalyzeAsync(text);
+                            Globals.ThisAddIn.AppendToPane("[CLU RAW]\r\n" + nlu.RawJson);
+                            Globals.ThisAddIn.AppendToPane("[CLU] TopIntent: " + nlu.TopIntent);
+                            foreach (var ent in nlu.Entities)
+                                Globals.ThisAddIn.AppendToPane(" - " + ent.Category + ": \"" + ent.Text + "\"");
+                        }
+                        catch (Exception exClu)
+                        {
+                            Globals.ThisAddIn.AppendToPane("[CLU] ERROR: " + exClu.Message);
+                        }
+                    }
+                    else if (e.Result.Reason == ResultReason.NoMatch)
+                    {
+                        Globals.ThisAddIn.AppendToPane("[Speech] NoMatch");
+                    }
+                };
 
-                Excel.Worksheet ws = (Excel.Worksheet)Globals.ThisAddIn.Application.ActiveSheet;
-                // ws.Range["A1"].Value = text;
-                Globals.Ribbons.Ribbon1.speechBox.Text = text;
+                recognizer.Canceled += (s, e) =>
+                {
+                    Globals.ThisAddIn.AppendToPane("[Speech] Canceled: " + e.Reason +
+                        (e.Reason == CancellationReason.Error
+                            ? " | " + e.ErrorCode + " | " + e.ErrorDetails
+                            : ""));
+                };
+
+                await recognizer.StartContinuousRecognitionAsync();
+                Globals.ThisAddIn.AppendToPane("[Speech] Started (speak now)");
             }
-            else
+            catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show("Speech not recognized. Please try again.");
-            }*/
+                Globals.ThisAddIn.AppendToPane("[Speech] START ERROR: " + ex.Message);
+            }
+        }
+
+        public async Task VoiceToExcelStopAync()
+        {
+            try
+            {
+                if (recognizer != null)
+                {
+                    Globals.ThisAddIn.AppendToPane("[Speech] stopping…");
+                    await recognizer.StopContinuousRecognitionAsync();
+                    recognizer.Dispose();
+                    recognizer = null;
+                    Globals.ThisAddIn.AppendToPane("[Speech] stopped.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Globals.ThisAddIn.AppendToPane("[Speech] STOP ERROR: " + ex.Message);
+            }
+        }
+
+
+        /*public async Task VoiceToExcelAsync()
+        {
+            var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
+            config.SpeechRecognitionLanguage = Config.SpeechLanguage;
+
+            recognizer = new SpeechRecognizer(config); //cream un recognizer care primeste input de la microfonul default
+
+            recognizer.Recognized += async (s, e) =>
+            {
+                if (e.Result.Reason == ResultReason.RecognizedSpeech)
+                {
+                    var text = e.Result.Text;
+                    Globals.ThisAddIn.AppendToPane("Heard: " + text);
+
+                    var nlu = await _clu.AnalyzeAsync(text);
+                    Globals.ThisAddIn.AppendToPane("TopIntent: " + nlu.TopIntent);
+                }
+            };
+
         }
 
         public async Task VoiceToExcelStopAync()
@@ -68,6 +140,6 @@ namespace ExcelAddInTest
                 recognizer.Dispose();
                 recognizer = null;
             }
-        }
+        }*/
     }
 }

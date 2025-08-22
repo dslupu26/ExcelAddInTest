@@ -1,61 +1,17 @@
-﻿using Microsoft.CognitiveServices.Speech;
-using Microsoft.Office.Tools.Ribbon;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelAddInTest
 {
-    public partial class Ribbon1
+    public static class CluDiag
     {
-        private VoiceInterpretor _voice;
-        private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
-        { 
-
-        }
-
-        private void btnSum_Click(object sender, RibbonControlEventArgs e)
-        {
-            Excel.Worksheet ws = Globals.ThisAddIn.Application.ActiveSheet;
-            double suma = (double)Globals.ThisAddIn.Application.WorksheetFunction.Sum(ws.Range["A1", "A4"]);
-            ws.Range["B1"].Value = suma;
-        }
-
-        private async void startRecord_Click(object sender, RibbonControlEventArgs e)
-        {
-            Globals.ThisAddIn.EnsureCluPane();
-            Globals.ThisAddIn.AppendToPane("[UI] Start button clicked");
-            _voice = Globals.ThisAddIn.GetOrCreateVoice();
-            await _voice.VoiceToExcelAsync();
-
-        }
-
-        private void SpeechBox_TextChanged(object sender, RibbonControlEventArgs e)
-        {
-
-        }
-        private void btnShowPane_Click(object sender, RibbonControlEventArgs e)
-        {
-            Globals.ThisAddIn.EnsureCluPane();
-            Globals.ThisAddIn.AppendToPane("Pane test: hello from Ribbon.");
-        }
-
-        public async void stopRecord_Click(object sender, RibbonControlEventArgs e)
-        {
-
-            _voice = Globals.ThisAddIn.GetOrCreateVoice();
-            await _voice.VoiceToExcelStopAync();
-        }
-
-        public async void debugBtn(object sender, RibbonControlEventArgs e)
-        {
-            await TestCluRestAsync(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,Config.CluDeployment, "Add C1 to B7" );
-        }
-
         public static async Task<string> TestCluRestAsync(
         string endpoint, string key, string projectName, string deploymentName, string text)
         {
+            // sanitizare
             endpoint = (endpoint ?? "").Trim().TrimEnd('/');
             var url = endpoint + "/language/:analyze-conversations?api-version=2023-04-01";
 
@@ -94,5 +50,6 @@ namespace ExcelAddInTest
                 return "[REST] Status=" + (int)resp.StatusCode + " " + resp.StatusCode + "\r\n" + body;
             }
         }
+
     }
 }

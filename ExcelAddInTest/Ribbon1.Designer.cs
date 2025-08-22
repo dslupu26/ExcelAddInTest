@@ -39,7 +39,9 @@
             this.btnSum = this.Factory.CreateRibbonButton();
             this.startRecord = this.Factory.CreateRibbonButton();
             this.stopRecord = this.Factory.CreateRibbonButton();
-            this.speechBox = this.Factory.CreateRibbonEditBox();
+            this.SpeechBox = this.Factory.CreateRibbonEditBox();
+            this.showPane = this.Factory.CreateRibbonButton();
+            this.debugg = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.SuspendLayout();
@@ -56,7 +58,9 @@
             this.group1.Items.Add(this.btnSum);
             this.group1.Items.Add(this.startRecord);
             this.group1.Items.Add(this.stopRecord);
-            this.group1.Items.Add(this.speechBox);
+            this.group1.Items.Add(this.SpeechBox);
+            this.group1.Items.Add(this.showPane);
+            this.group1.Items.Add(this.debugg);
             this.group1.Label = "group1";
             this.group1.Name = "group1";
             // 
@@ -78,12 +82,24 @@
             this.stopRecord.Name = "stopRecord";
             this.stopRecord.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.stopRecord_Click);
             // 
-            // speechBox
+            // SpeechBox
             // 
-            this.speechBox.Label = "speechBox";
-            this.speechBox.Name = "speechBox";
-            this.speechBox.Text = null;
-            this.speechBox.TextChanged += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.speechBox_TextChanged);
+            this.SpeechBox.Label = "speechBox";
+            this.SpeechBox.Name = "SpeechBox";
+            this.SpeechBox.Text = null;
+            // 
+            // showPane
+            // 
+            this.showPane.Label = "showPane";
+            this.showPane.Name = "showPane";
+            this.showPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnShowPane_Click);
+            // 
+            // debugg
+            // 
+            this.debugg.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.debugg.Label = "debugg";
+            this.debugg.Name = "debugg";
+            this.debugg.ShowImage = true;
             // 
             // Ribbon1
             // 
@@ -105,8 +121,10 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group1;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnSum;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton startRecord;
-        internal Microsoft.Office.Tools.Ribbon.RibbonEditBox speechBox;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton stopRecord;
+        internal Microsoft.Office.Tools.Ribbon.RibbonEditBox SpeechBox;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton showPane;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton debugg;
     }
 
     partial class ThisRibbonCollection
