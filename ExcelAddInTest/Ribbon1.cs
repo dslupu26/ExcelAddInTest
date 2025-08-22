@@ -1,15 +1,17 @@
-﻿using Microsoft.Office.Tools.Ribbon;
+﻿using Microsoft.CognitiveServices.Speech;
+using Microsoft.Office.Tools.Ribbon;
+using System;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
-using Microsoft.CognitiveServices.Speech;
 
 namespace ExcelAddInTest
 {
     public partial class Ribbon1
     {
-        private VoiceInterpretor voiceInterpretor = new VoiceInterpretor();
-
+        private VoiceInterpretor _voice;
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
-        {
+        { 
 
         }
 
@@ -22,18 +24,37 @@ namespace ExcelAddInTest
 
         private async void startRecord_Click(object sender, RibbonControlEventArgs e)
         {
-            await voiceInterpretor.VoiceToExcelAsync();
+            Globals.ThisAddIn.EnsureCluPane();
+            Globals.ThisAddIn.AppendToPane("[UI] Start button clicked");
+            _voice = Globals.ThisAddIn.GetOrCreateVoice();
+            await _voice.VoiceToExcelAsync();
 
         }
 
-        private void speechBox_TextChanged(object sender, RibbonControlEventArgs e)
+        private void SpeechBox_TextChanged(object sender, RibbonControlEventArgs e)
         {
 
+        }
+        private void btnShowPane_Click(object sender, RibbonControlEventArgs e)
+        {
+            Globals.ThisAddIn.EnsureCluPane();
+            Globals.ThisAddIn.AppendToPane("Pane test: hello from Ribbon.");
         }
 
         public async void stopRecord_Click(object sender, RibbonControlEventArgs e)
         {
-            await voiceInterpretor.VoiceToExcelStopAync();
+
+            _voice = Globals.ThisAddIn.GetOrCreateVoice();
+            await _voice.VoiceToExcelStopAync();
+        }
+
+        public async void debugBtn(object sender, RibbonControlEventArgs e)
+        {
+            var log = await CluDiag.TestCluRestAsync(
+            Config.CluEndpoint, Config.CluKey, Config.CluProjectName, Config.CluDeployment,
+            "Select the range from A1 to C8");
+
+            Globals.ThisAddIn.AppendToPane(log);
         }
     }
 }
