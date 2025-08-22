@@ -23,25 +23,14 @@ namespace ExcelAddInTest
 
         public VoiceInterpretor Voice { get; private set; }
 
-        public static SynchronizationContext UiContext { get; private set; }
-
-        private string endpoint;
-        private string key;
-        private string projectName;
-        private string deployment;
-
-        private string speechKey;
-        private string region;
-        private string speechLanguage;
-
-       
+        public static SynchronizationContext UiContext { get; private set; }       
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             MessageBox.Show("ThisAddIn_Startup called");
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)12288; } catch { }
-            EnsureCluPane();            // creează panoul dacă nu există
+            EnsureCluPane();           
             _cluPane.Visible = true;
             GetOrCreateVoice();
         }

@@ -40,7 +40,7 @@
             this.CluOutputBox.Name = "CluOutputBox";
             this.CluOutputBox.ReadOnly = true;
             this.CluOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.CluOutputBox.Size = new System.Drawing.Size(482, 473);
+            this.CluOutputBox.Size = new System.Drawing.Size(500, 473);
             this.CluOutputBox.TabIndex = 0;
             // 
             // CluOutputLabel

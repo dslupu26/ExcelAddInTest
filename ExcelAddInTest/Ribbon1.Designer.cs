@@ -100,6 +100,7 @@
             this.debugg.Label = "debugg";
             this.debugg.Name = "debugg";
             this.debugg.ShowImage = true;
+            this.debugg.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.debugBtn);
             // 
             // Ribbon1
             // 
