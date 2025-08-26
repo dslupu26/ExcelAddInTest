@@ -54,19 +54,18 @@
             // 
             // group1
             // 
-            this.group1.Items.Add(this.btnSum);
             this.group1.Items.Add(this.startRecord);
             this.group1.Items.Add(this.stopRecord);
             this.group1.Items.Add(this.showPane);
+            this.group1.Items.Add(this.btnSum);
             this.group1.Items.Add(this.debugg);
             this.group1.Label = "group1";
             this.group1.Name = "group1";
             // 
             // btnSum
             // 
-            this.btnSum.Label = "btnSum";
+            this.btnSum.Label = "";
             this.btnSum.Name = "btnSum";
-            this.btnSum.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnSum_Click);
             // 
             // startRecord
             // 
@@ -85,6 +84,11 @@
             this.showPane.Label = "showPane";
             this.showPane.Name = "showPane";
             this.showPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnShowPane_Click);
+            // 
+            // debugg
+            // 
+            this.debugg.Label = "";
+            this.debugg.Name = "debugg";
             // 
             // Ribbon1
             // 
