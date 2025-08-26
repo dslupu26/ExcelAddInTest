@@ -28,7 +28,7 @@ namespace ExcelAddInTest
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
             MessageBox.Show("ThisAddIn_Startup called");
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            System.Net.ServicePointManager.SecurityProtocol =System.Net.SecurityProtocolType.Tls12;
             try { ServicePointManager.SecurityProtocol |= (SecurityProtocolType)12288; } catch { }
             EnsureCluPane();           
             _cluPane.Visible = true;
