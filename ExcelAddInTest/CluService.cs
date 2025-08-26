@@ -1,10 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Azure;
+﻿using Azure;
 using Azure.AI.Language.Conversations;
 using Azure.Core;
+using Azure.Core.Pipeline;
+using Microsoft.Extensions.Azure;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Security.Authentication;
+using System.Threading.Tasks;
 
 namespace ExcelAddInTest
 {
@@ -32,10 +36,32 @@ namespace ExcelAddInTest
             if (string.IsNullOrWhiteSpace(endpoint)) throw new ArgumentException("endpoint missing");
             if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("key missing");
 
-            _client = new ConversationAnalysisClient(new Uri(endpoint.Trim()), new AzureKeyCredential(key.Trim()));
+            var handler = new HttpClientHandler
+            {
+                // dacă ești în rețea cu proxy, lasă UseProxy=true (default) sau setează handler.Proxy
+                SslProtocols = SslProtocols.Tls12
+            };
+            var httpClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(30)
+            };
+            var opts = new ConversationsClientOptions
+            {
+                Retry =
+                {
+                    Mode = RetryMode.Exponential,
+                    Delay = TimeSpan.FromMilliseconds(500),
+                    MaxRetries = 0   
+                },
+                Transport = new HttpClientTransport(httpClient)
+            };
+
+            _client = new ConversationAnalysisClient(new Uri(endpoint.Trim()), new AzureKeyCredential(key.Trim()),opts);
             _project = (projectName ?? "").Trim();
             _deployment = (deploymentName ?? "").Trim();
+            
         }
+     
 
         public async Task<NluResult> AnalyzeAsync(string text)
         {
@@ -53,7 +79,7 @@ namespace ExcelAddInTest
                             participantId = "user",
                             text = cleaned,
                             modality = "text",
-                            language = "en-us" 
+                            language = "en-US" 
                         }
                     },
                     parameters = new

@@ -239,7 +239,6 @@
     can be found.
   -->
   <ItemGroup>
-    <Compile Include="CluDiag.cs" />
     <Compile Include="CluOutputPane.cs">
       <SubType>UserControl</SubType>
     </Compile>

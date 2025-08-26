@@ -48,13 +48,5 @@ namespace ExcelAddInTest
             await _voice.VoiceToExcelStopAync();
         }
 
-        public async void debugBtn(object sender, RibbonControlEventArgs e)
-        {
-            var log = await CluDiag.TestCluRestAsync(
-            Config.CluEndpoint, Config.CluKey, Config.CluProjectName, Config.CluDeployment,
-            "Select the range from A1 to C8");
-
-            Globals.ThisAddIn.AppendToPane(log);
-        }
     }
 }

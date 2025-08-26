@@ -94,14 +94,6 @@
             this.showPane.Name = "showPane";
             this.showPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnShowPane_Click);
             // 
-            // debugg
-            // 
-            this.debugg.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
-            this.debugg.Label = "debugg";
-            this.debugg.Name = "debugg";
-            this.debugg.ShowImage = true;
-            this.debugg.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.debugBtn);
-            // 
             // Ribbon1
             // 
             this.Name = "Ribbon1";
