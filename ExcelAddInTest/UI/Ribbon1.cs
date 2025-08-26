@@ -15,12 +15,12 @@ namespace ExcelAddInTest
 
         }
 
-        private void btnSum_Click(object sender, RibbonControlEventArgs e)
+/*        private void btnSum_Click(object sender, RibbonControlEventArgs e)
         {
             Excel.Worksheet ws = Globals.ThisAddIn.Application.ActiveSheet;
             double suma = (double)Globals.ThisAddIn.Application.WorksheetFunction.Sum(ws.Range["A1", "A4"]);
             ws.Range["B1"].Value = suma;
-        }
+        }*/
 
         private async void startRecord_Click(object sender, RibbonControlEventArgs e)
         {

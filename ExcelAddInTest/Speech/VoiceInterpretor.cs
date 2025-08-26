@@ -109,37 +109,5 @@ namespace ExcelAddInTest
                 Globals.ThisAddIn.AppendToPane("[Speech] STOP ERROR: " + ex.Message);
             }
         }
-
-
-        /*public async Task VoiceToExcelAsync()
-        {
-            var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
-            config.SpeechRecognitionLanguage = Config.SpeechLanguage;
-
-            recognizer = new SpeechRecognizer(config); //cream un recognizer care primeste input de la microfonul default
-
-            recognizer.Recognized += async (s, e) =>
-            {
-                if (e.Result.Reason == ResultReason.RecognizedSpeech)
-                {
-                    var text = e.Result.Text;
-                    Globals.ThisAddIn.AppendToPane("Heard: " + text);
-
-                    var nlu = await _clu.AnalyzeAsync(text);
-                    Globals.ThisAddIn.AppendToPane("TopIntent: " + nlu.TopIntent);
-                }
-            };
-
-        }
-
-        public async Task VoiceToExcelStopAync()
-        {
-            if (recognizer != null)
-            {
-                await recognizer.StopContinuousRecognitionAsync();
-                recognizer.Dispose();
-                recognizer = null;
-            }
-        }*/
     }
 }

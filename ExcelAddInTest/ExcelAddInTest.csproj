@@ -278,22 +278,20 @@
     can be found.
   -->
   <ItemGroup>
-    <Compile Include="CluOutputPane.cs">
+    <Compile Include="Nlu\CluOutputPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="CluOutputPane.Designer.cs">
+    <Compile Include="Nlu\CluOutputPane.Designer.cs">
       <DependentUpon>CluOutputPane.cs</DependentUpon>
     </Compile>
-    <Compile Include="CluService.cs" />
-    <Compile Include="Config.cs" />
+    <Compile Include="Nlu\CluService.cs" />
+    <Compile Include="Infrastructure\Config.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UserControl1.xaml.cs">
-      <DependentUpon>UserControl1.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="VoiceInterpretor.cs" />
-    <EmbeddedResource Include="CluOutputPane.resx">
+    <Compile Include="Speech\ListenMode.cs" />
+    <Compile Include="Speech\VoiceInterpretor.cs" />
+    <EmbeddedResource Include="Nlu\CluOutputPane.resx">
       <DependentUpon>CluOutputPane.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -305,11 +303,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Ribbon1.resx">
+    <EmbeddedResource Include="UI\Ribbon1.resx">
       <DependentUpon>Ribbon1.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="Infrastructure\app.config" />
+    <None Include="Infrastructure\packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -318,10 +316,10 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Ribbon1.cs">
+    <Compile Include="UI\Ribbon1.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Ribbon1.Designer.cs">
+    <Compile Include="UI\Ribbon1.Designer.cs">
       <DependentUpon>Ribbon1.cs</DependentUpon>
     </Compile>
     <Compile Include="ThisAddIn.cs">
@@ -336,10 +334,7 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="UserControl1.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Folder Include="ExcelApi\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
