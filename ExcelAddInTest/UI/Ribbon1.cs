@@ -27,7 +27,12 @@ namespace ExcelAddInTest
             Globals.ThisAddIn.EnsureCluPane();
             Globals.ThisAddIn.AppendToPane("[UI] Start button clicked");
             _voice = Globals.ThisAddIn.GetOrCreateVoice();
-            await _voice.VoiceToExcelAsync();
+            await _voice.StartAsync(new VoiceListenOptions
+            {
+                Mode = ListenMode.Continuous,          // or ListenMode.SingleUtterance
+                AutoStopAfter = TimeSpan.FromSeconds(15), // or null (disabled)
+                MaxDuration = TimeSpan.FromSeconds(30)  // or null (no hard cap)
+            });
 
         }
 
@@ -45,7 +50,7 @@ namespace ExcelAddInTest
         {
 
             _voice = Globals.ThisAddIn.GetOrCreateVoice();
-            await _voice.VoiceToExcelStopAync();
+            await _voice.StopAsync();
         }
 
     }

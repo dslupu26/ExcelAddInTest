@@ -290,6 +290,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Speech\ListenMode.cs" />
+    <Compile Include="Speech\TaskExtentions.cs" />
     <Compile Include="Speech\VoiceInterpretor.cs" />
     <EmbeddedResource Include="Nlu\CluOutputPane.resx">
       <DependentUpon>CluOutputPane.cs</DependentUpon>
