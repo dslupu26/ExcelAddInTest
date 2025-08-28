@@ -22,7 +22,7 @@ namespace ExcelAddInTest
         public Microsoft.Office.Tools.CustomTaskPane CluPane => _cluPane;
         public CluOutputPane CluControl => _cluControl;
 
-        public VoiceInterpretor Voice { get; private set; }
+        public VoiceInterpreter Voice { get; private set; }
 
         public static SynchronizationContext UiContext { get; private set; }       
 
@@ -49,13 +49,13 @@ namespace ExcelAddInTest
 
 
 
-        public VoiceInterpretor GetOrCreateVoice()
+        public VoiceInterpreter GetOrCreateVoice()
         {
             if (Voice == null)
             { 
                 var clu = new CluService( Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
-                Voice = new VoiceInterpretor(clu);
+                Voice = new VoiceInterpreter(clu);
             }
             return Voice;
         }

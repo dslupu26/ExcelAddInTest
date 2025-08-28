@@ -9,7 +9,7 @@ namespace ExcelAddInTest
 {
     public partial class Ribbon1
     {
-        private VoiceInterpretor _voice;
+        private VoiceInterpreter _voice;
         private void Ribbon1_Load(object sender, RibbonUIEventArgs e)
         { 
 

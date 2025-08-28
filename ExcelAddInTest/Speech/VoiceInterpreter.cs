@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ExcelAddInTest.Utils;
 
-public class VoiceInterpretor
+public class VoiceInterpreter
 {
     private SpeechRecognizer recognizer;
     private readonly CluService _clu;
@@ -15,7 +15,7 @@ public class VoiceInterpretor
     private bool _isListening;
     private VoiceListenOptions _opts;
 
-    public VoiceInterpretor(CluService clu) => _clu = clu;
+    public VoiceInterpreter(CluService clu) => _clu = clu;
 
     public async Task StartAsync(VoiceListenOptions opts)
     {

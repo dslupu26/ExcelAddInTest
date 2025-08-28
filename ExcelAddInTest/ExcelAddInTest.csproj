@@ -291,7 +291,7 @@
     </Compile>
     <Compile Include="Speech\ListenMode.cs" />
     <Compile Include="Speech\TaskExtentions.cs" />
-    <Compile Include="Speech\VoiceInterpretor.cs" />
+    <Compile Include="Speech\VoiceInterpreter.cs" />
     <EmbeddedResource Include="Nlu\CluOutputPane.resx">
       <DependentUpon>CluOutputPane.cs</DependentUpon>
     </EmbeddedResource>

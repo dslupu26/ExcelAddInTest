@@ -36,10 +36,10 @@
         {
             this.tab1 = this.Factory.CreateRibbonTab();
             this.group1 = this.Factory.CreateRibbonGroup();
-            this.btnSum = this.Factory.CreateRibbonButton();
             this.startRecord = this.Factory.CreateRibbonButton();
             this.stopRecord = this.Factory.CreateRibbonButton();
             this.showPane = this.Factory.CreateRibbonButton();
+            this.btnSum = this.Factory.CreateRibbonButton();
             this.debugg = this.Factory.CreateRibbonButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
@@ -62,11 +62,6 @@
             this.group1.Label = "group1";
             this.group1.Name = "group1";
             // 
-            // btnSum
-            // 
-            this.btnSum.Label = "";
-            this.btnSum.Name = "btnSum";
-            // 
             // startRecord
             // 
             this.startRecord.Label = "startRecord";
@@ -84,6 +79,11 @@
             this.showPane.Label = "showPane";
             this.showPane.Name = "showPane";
             this.showPane.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnShowPane_Click);
+            // 
+            // btnSum
+            // 
+            this.btnSum.Label = "";
+            this.btnSum.Name = "btnSum";
             // 
             // debugg
             // 
