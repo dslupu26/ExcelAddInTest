@@ -6,14 +6,14 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelAddInTest
 {
-    public class VoiceInterpretor
+    public class VoiceInterpreter
     {
         private SpeechRecognizer recognizer;
         string speechKey = Config.SpeechKey;
         string speechRegion = Config.SpeechRegion;
 
         private CluService _clu; //variabila privata pentru serviciul CLU
-        public VoiceInterpretor(CluService clu)
+        public VoiceInterpreter(CluService clu)
         {
             _clu = clu; //injectam clu prin constructor
         }
