@@ -12,6 +12,7 @@ using System.Windows.Forms.Integration;
 using System.Xml.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
+using ExcelAddInTest.Logging;
 
 namespace ExcelAddInTest
 {
@@ -21,7 +22,9 @@ namespace ExcelAddInTest
         private ExcelApi.IExcelActions _excel;
 
         private Microsoft.Office.Tools.CustomTaskPane _debugPane;
-        private DebugPane _debugControl;
+
+        private DebugPane _debugControl;     // the UserControl instance already on your task pane
+        private ILogger _log;
 
         private Microsoft.Office.Tools.CustomTaskPane _pane;
         private UserInterface.UserControlPane control;
@@ -34,9 +37,12 @@ namespace ExcelAddInTest
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            _excelCtx = SynchronizationContext.Current;
             InitializeUserInterface(); // initializam meniul 
+            _excelCtx = SynchronizationContext.Current;
+            
             EnsureDebugPane(); //initializam panoul de debug
+            _log = new DebugPaneLogger(_debugControl);
+
             InitializeServices(); // initalizam speech service si clu service
         }
 
@@ -61,12 +67,13 @@ namespace ExcelAddInTest
                     _ctxToggle.Style = Office.MsoButtonStyle.msoButtonCaption;
                 }
 
-                addinsBar = Application.CommandBars["Add-Ins"];
+                // addinsBar = Application.CommandBars["Add-Ins"];
             }
-            catch (Exception e) { AppendToPane("[CTX MENIU ERROR] " + e.Message); }
+            catch (Exception ex)
+            {
+                throw new Exception("Problem on Initialize" + ex.Message);
+            }
             _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
-
-
         }
 
         private void CellCtxToggle_Click(CommandBarButton Ctrl, ref bool CancelDefault)
@@ -76,7 +83,10 @@ namespace ExcelAddInTest
                 _pane.Visible = !_pane.Visible;
                 CancelDefault = true;
             }
-            catch (Exception ex) { AppendToPane("[CTX MENIU TOGGLE ERROR] " + ex.Message); }
+            catch (Exception ex)
+            {
+                _log.Error("[CTX MENU TOGGLE ERROR]", ex);
+            }
         }
 
         public void EnsureDebugPane()
@@ -90,15 +100,13 @@ namespace ExcelAddInTest
             control.SetDebugPane(_debugPane);
         }
 
-
-
         public VoiceInterpreter InitializeServices()
         {
             if (Voice == null)
             {
                 var clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
-                Voice = new VoiceInterpreter(clu, _excel);
+                Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"));
                 control.SetVoiceInterpreter(Voice);
             }
             return Voice;
@@ -106,32 +114,6 @@ namespace ExcelAddInTest
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-        }
-        public void AppendToPane(string text)
-        {
-            if (_debugControl == null) return;
-            _debugControl.AppendText(text);
-        }
-
-        public void AppendCluLog(ExcelAddInTest.NluResult nlu)
-        {
-            if (nlu == null) return;
-
-            var sb = new StringBuilder();
-            sb.AppendLine("TopIntent: " + (nlu.TopIntent ?? "None"));
-
-            if (nlu.Entities != null && nlu.Entities.Count > 0)
-            {
-                sb.AppendLine("Entities:");
-                foreach (var ent in nlu.Entities)
-                    sb.AppendLine(" - " + ent.Category + ": \"" + ent.Text + "\"");
-            }
-            else
-            {
-                sb.AppendLine("Entities: (none)");
-            }
-
-            _debugControl.AppendText(sb.ToString());
         }
 
         internal void AppendToInputBox(string v)
