@@ -16,6 +16,16 @@ namespace ExcelAddInTest.UserInterface
     {
         private VoiceInterpreter _voice;
         private CustomTaskPane _debugPane;
+        private readonly VoiceListenOptions _listenOptions = new VoiceListenOptions();
+        private VoiceListenOptions vlo = new VoiceListenOptions()
+        {
+            Mode = ListenMode.Continuous,
+            AutoStopAfter = null,
+            MaxDuration = TimeSpan.FromSeconds(30),
+            Language = Config.SpeechLanguage,
+            InitialSilenceTimeoutMs = 5000,
+            EndSilenceTimeoutMs = 2000
+        };
         public UserControlPane()
         {
             InitializeComponent();
@@ -37,12 +47,12 @@ namespace ExcelAddInTest.UserInterface
 
         private async void StartRecording(object sender, EventArgs e)
         {
-            await _voice.VoiceToExcelAsync();
+            await _voice.StartAsync(_listenOptions);
         }
 
         private async void StopRecording(object sender, EventArgs e)
         {
-            await _voice.VoiceToExcelStopAync();
+            await _voice.StopAsync();
         }
 
         private void DebugButton_Click(object sender, EventArgs e)

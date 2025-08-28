@@ -295,7 +295,6 @@
     </Compile>
     <Compile Include="Speech\ListenMode.cs" />
     <Compile Include="Speech\TaskExtentions.cs" />
-    <Compile Include="Speech\VoiceInterpretor.cs" />
     <Compile Include="Speech\VoiceInterpreter.cs" />
     <Compile Include="UI\DebugPane.cs">
       <SubType>UserControl</SubType>
@@ -321,9 +320,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="UI\Ribbon1.resx">
-      <DependentUpon>Ribbon1.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="UI\UserControlPane.resx">
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </EmbeddedResource>
@@ -337,12 +333,6 @@
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Include="UI\Ribbon1.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="UI\Ribbon1.Designer.cs">
-      <DependentUpon>Ribbon1.cs</DependentUpon>
     </Compile>
     <Compile Include="ThisAddIn.cs">
       <SubType>Code</SubType>
