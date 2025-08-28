@@ -41,6 +41,7 @@ namespace ExcelAddInTest
         public async void stopRecord_Click(object sender, RibbonControlEventArgs e)
         {
 
+            _voice = Globals.ThisAddIn.GetOrCreateVoice();
             await _voice.VoiceToExcelStopAync();
         }
 

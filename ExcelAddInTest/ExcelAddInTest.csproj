@@ -294,6 +294,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Speech\ListenMode.cs" />
+    <Compile Include="Speech\TaskExtentions.cs" />
+    <Compile Include="Speech\VoiceInterpretor.cs" />
     <Compile Include="Speech\VoiceInterpreter.cs" />
     <Compile Include="UI\DebugPane.cs">
       <SubType>UserControl</SubType>
