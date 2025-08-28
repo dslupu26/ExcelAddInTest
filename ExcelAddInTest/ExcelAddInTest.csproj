@@ -280,6 +280,8 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="ExcelApi\ExcelFacade.cs" />
+    <Compile Include="ExcelApi\IExcelActions.cs" />
     <Compile Include="Nlu\CluOutputPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -293,6 +295,12 @@
     </Compile>
     <Compile Include="Speech\ListenMode.cs" />
     <Compile Include="Speech\VoiceInterpreter.cs" />
+    <Compile Include="UI\DebugPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\DebugPane.Designer.cs">
+      <DependentUpon>DebugPane.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\UserControlPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -345,9 +353,7 @@
     </Compile>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ExcelApi\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

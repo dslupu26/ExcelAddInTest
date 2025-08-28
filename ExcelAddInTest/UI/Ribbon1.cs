@@ -24,9 +24,6 @@ namespace ExcelAddInTest
 
         private async void startRecord_Click(object sender, RibbonControlEventArgs e)
         {
-            Globals.ThisAddIn.EnsureCluPane();
-            Globals.ThisAddIn.AppendToPane("[UI] Start button clicked");
-            _voice = Globals.ThisAddIn.GetOrCreateVoice();
             await _voice.VoiceToExcelAsync();
 
         }
@@ -37,14 +34,13 @@ namespace ExcelAddInTest
         }
         private void btnShowPane_Click(object sender, RibbonControlEventArgs e)
         {
-            Globals.ThisAddIn.EnsureCluPane();
+
             Globals.ThisAddIn.AppendToPane("Pane test: hello from Ribbon.");
         }
 
         public async void stopRecord_Click(object sender, RibbonControlEventArgs e)
         {
 
-            _voice = Globals.ThisAddIn.GetOrCreateVoice();
             await _voice.VoiceToExcelStopAync();
         }
 

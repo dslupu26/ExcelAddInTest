@@ -1,4 +1,5 @@
-﻿using Microsoft.CognitiveServices.Speech;
+﻿using ExcelAddInTest.ExcelApi;
+using Microsoft.CognitiveServices.Speech;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,12 +10,11 @@ namespace ExcelAddInTest
     public class VoiceInterpreter
     {
         private SpeechRecognizer recognizer;
-        string speechKey = Config.SpeechKey;
-        string speechRegion = Config.SpeechRegion;
-
-        private CluService _clu; //variabila privata pentru serviciul CLU
-        public VoiceInterpreter(CluService clu)
+        private readonly IExcelActions _excel;
+        private readonly CluService _clu; //variabila privata pentru serviciul CLU
+        public VoiceInterpreter(CluService clu, IExcelActions excel)
         {
+            this._excel = excel;
             _clu = clu; //injectam clu prin constructor
         }
 
