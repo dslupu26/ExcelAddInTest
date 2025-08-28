@@ -15,9 +15,9 @@ namespace ExcelAddInTest.ExcelApi.Commands
             _range = range;
         }
         
-        public void Execute(IexcelActions excel)
+        public void Execute(IExcelActions excel)
         {
-            excel.SelectArea(_range);
+            excel.SelectRange(_range);
         }
     }
 }

@@ -1,23 +1,29 @@
-﻿using Microsoft.CognitiveServices.Speech;
+﻿using ExcelAddInTest;
+using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.Utils;
+using Microsoft.CognitiveServices.Speech;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ExcelAddInTest.Utils;
-using ExcelAddInTest.ExcelApi;
-using ExcelAddInTest;
 
 public class VoiceInterpreter
 {
     private SpeechRecognizer recognizer;
     private readonly CluService _clu;
     private readonly IExcelActions _excel;
+    private readonly ExcelAddInTest.Logging.ILogger _log;
 
     private CancellationTokenSource _cts;
     private bool _isListening;
     private VoiceListenOptions _opts;
 
-    public VoiceInterpreter(CluService clu, IExcelActions excel) {_clu = clu ; _excel = excel;}
+    public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log)
+    {
+        _clu = clu;
+        _excel = excel;
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+    }
 
     public async Task StartAsync(VoiceListenOptions opts)
     {
@@ -26,20 +32,20 @@ public class VoiceInterpreter
         _opts = opts ?? new VoiceListenOptions();
         _cts = new CancellationTokenSource();
 
-        Globals.ThisAddIn.AppendToPane("[Speech] starting…");
+        _log.Info("starting…");
 
         var config = SpeechConfig.FromSubscription(Config.SpeechKey, Config.SpeechRegion);
+        _ = config ?? throw new InvalidOperationException("Speech configuration failed.");
         config.SpeechRecognitionLanguage = _opts.Language;
 
-        // Timpii de tăcere (silence) – controlează cât de repede „taie” fraza
+        // Silence timeouts – control how fast an utterance is considered finished
         config.SetProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
                            _opts.InitialSilenceTimeoutMs.ToString());
         config.SetProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
                            _opts.EndSilenceTimeoutMs.ToString());
 
-        recognizer = new SpeechRecognizer(config); // poți trece și AudioConfig pt. device selectat
-
-        WireEvents(); // atașează evenimentele tale de log + CLU
+        recognizer = new SpeechRecognizer(config); // (optionally) pass AudioConfig for specific mic
+        WireEvents();
 
         if (_opts.Mode == ListenMode.SingleUtterance)
         {
@@ -50,7 +56,7 @@ public class VoiceInterpreter
             }
             catch (OperationCanceledException)
             {
-                Globals.ThisAddIn.AppendToPane("[Speech] Single-utterance canceled.");
+                _log.Warn("Single-utterance canceled.");
             }
             finally
             {
@@ -61,13 +67,13 @@ public class VoiceInterpreter
 
         // Continuous
         await recognizer.StartContinuousRecognitionAsync();
-        Globals.ThisAddIn.AppendToPane("[Speech] Started (speak now)");
+        _log.Info("Started (speak now)");
 
-        // Auto-stop după o durată (ex. 15/30s)
+        // Auto-stop after a duration (e.g., 15/30s)
         if (_opts.AutoStopAfter.HasValue)
             _ = GuardStopAfter(_opts.AutoStopAfter.Value, "[AutoStopAfter]");
 
-        // Hard cap (ex. până apeși Stop, dar max 30s)
+        // Hard cap (until you press Stop, but max 30s)
         if (_opts.MaxDuration.HasValue)
             _ = GuardStopAfter(_opts.MaxDuration.Value, "[MaxDuration]");
     }
@@ -82,16 +88,16 @@ public class VoiceInterpreter
             _cts?.Cancel();
             if (recognizer != null)
             {
-                Globals.ThisAddIn.AppendToPane("[Speech] stopping…");
-                try { await recognizer.StopContinuousRecognitionAsync(); } catch { /* poate fi deja oprit */ }
+                _log.Info("stopping…");
+                try { await recognizer.StopContinuousRecognitionAsync(); } catch { /* already stopped */ }
                 recognizer.Dispose();
                 recognizer = null;
             }
-            Globals.ThisAddIn.AppendToPane("[Speech] stopped.");
+            _log.Info("stopped.");
         }
         catch (Exception ex)
         {
-            Globals.ThisAddIn.AppendToPane("[Speech] STOP ERROR: " + ex.Message);
+            _log.Error("STOP ERROR", ex);
         }
     }
 
@@ -101,61 +107,59 @@ public class VoiceInterpreter
         try
         {
             await Task.Delay(delay, _cts.Token);
-            Globals.ThisAddIn.AppendToPane($"{tag} elapsed → stopping.");
+            _log.Info($"{tag} elapsed → stopping.");
             await StopAsync();
         }
-        catch (TaskCanceledException) { /* ignoră */ }
+        catch (TaskCanceledException) { /* ignore */ }
     }
 
     private void WireEvents()
     {
-        recognizer.SessionStarted += (s, e) => Globals.ThisAddIn.AppendToPane("[Speech] SessionStarted");
-        recognizer.SessionStopped += (s, e) => Globals.ThisAddIn.AppendToPane("[Speech] SessionStopped");
-        recognizer.SpeechStartDetected += (s, e) => Globals.ThisAddIn.AppendToPane("[Speech] SpeechStartDetected");
-        recognizer.SpeechEndDetected += (s, e) => Globals.ThisAddIn.AppendToPane("[Speech] SpeechEndDetected");
+        recognizer.SessionStarted += (s, e) => _log.Info("SessionStarted");
+        recognizer.SessionStopped += (s, e) => _log.Info("SessionStopped");
+        recognizer.SpeechStartDetected += (s, e) => _log.Info("SpeechStartDetected");
+        recognizer.SpeechEndDetected += (s, e) => _log.Info("SpeechEndDetected");
 
         recognizer.Recognizing += (s, e) =>
         {
             if (e.Result.Reason == ResultReason.RecognizingSpeech)
-                Globals.ThisAddIn.AppendToPane("[Speech] Recognizing: " + e.Result.Text);
+                _log.Info("Recognizing: " + e.Result.Text);
         };
 
         recognizer.Recognized += async (s, e) =>
         {
-            Globals.ThisAddIn.AppendToPane("[Speech] Recognized reason: " + e.Result.Reason);
+            _log.Info("Recognized reason: " + e.Result.Reason);
             if (e.Result.Reason == ResultReason.RecognizedSpeech)
             {
                 await HandleResultAsync(e.Result);
-
-                // dacă vrei „oprește-te după prima frază” DAR rămâi pe continuous:
-                // if (_opts.AutoStopAfter == null && _opts.MaxDuration == null && someFlag)
-                //     await StopAsync();
             }
         };
 
         recognizer.Canceled += (s, e) =>
         {
-            Globals.ThisAddIn.AppendToPane("[Speech] Canceled: " + e.Reason +
-                (e.Reason == CancellationReason.Error ? " | " + e.ErrorCode + " | " + e.ErrorDetails : ""));
+            if (e.Reason == CancellationReason.Error)
+                _log.Error($"Canceled: {e.Reason} | {e.ErrorCode} | {e.ErrorDetails}");
+            else
+                _log.Warn($"Canceled: {e.Reason}");
         };
     }
 
     private async Task HandleResultAsync(SpeechRecognitionResult result)
     {
         var text = result.Text?.Trim();
-        Globals.ThisAddIn.AppendToPane("[Speech] Final: " + text);
+        _log.Info("Final: " + text);
 
         try
         {
             var nlu = await _clu.AnalyzeAsync(text);
-            Globals.ThisAddIn.AppendToPane("[CLU RAW]\r\n" + nlu.RawJson);
-            Globals.ThisAddIn.AppendToPane("[CLU] TopIntent: " + nlu.TopIntent);
+            _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
+            _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
             foreach (var ent in nlu.Entities)
-                Globals.ThisAddIn.AppendToPane($" - {ent.Category}: \"{ent.Text}\"");
+                _log.Info($" - {ent.Category}: \"{ent.Text}\"");
         }
         catch (Exception exClu)
         {
-            Globals.ThisAddIn.AppendToPane("[CLU] ERROR: " + exClu.Message);
+            _log.Error("[CLU] ERROR", exClu);
         }
     }
 }
