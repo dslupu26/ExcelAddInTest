@@ -11,9 +11,9 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace ExcelAddInTest
 {
-    public partial class CluOutputPane : UserControl
+    public partial class DebugPane : UserControl
     {
-        public CluOutputPane()
+        public DebugPane()
         {
             InitializeComponent();
         }

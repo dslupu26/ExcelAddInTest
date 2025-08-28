@@ -1,21 +1,23 @@
-﻿using ExcelAddInTest;
-using Microsoft.CognitiveServices.Speech;
+﻿using Microsoft.CognitiveServices.Speech;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ExcelAddInTest.Utils;
+using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest;
 
 public class VoiceInterpreter
 {
     private SpeechRecognizer recognizer;
     private readonly CluService _clu;
+    private readonly IExcelActions _excel;
 
     private CancellationTokenSource _cts;
     private bool _isListening;
     private VoiceListenOptions _opts;
 
-    public VoiceInterpreter(CluService clu) => _clu = clu;
+    public VoiceInterpreter(CluService clu, IExcelActions excel) {_clu = clu ; _excel = excel;}
 
     public async Task StartAsync(VoiceListenOptions opts)
     {

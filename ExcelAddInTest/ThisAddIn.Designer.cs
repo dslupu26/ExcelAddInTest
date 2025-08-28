@@ -63,6 +63,8 @@ namespace ExcelAddInTest {
 
         private void InternalStartup()
         {
+            this.Startup += new EventHandler(ThisAddIn_Startup);
+            this.Shutdown += new EventHandler(ThisAddIn_Shutdown);
         }
 
         /// 

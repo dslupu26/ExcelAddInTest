@@ -1,6 +1,6 @@
 ﻿namespace ExcelAddInTest
 {
-    partial class CluOutputPane
+    partial class DebugPane
     {
         /// <summary> 
         /// Required designer variable.
@@ -29,37 +29,25 @@
         private void InitializeComponent()
         {
             this.CluOutputBox = new System.Windows.Forms.TextBox();
-            this.CluOutputLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // CluOutputBox
             // 
             this.CluOutputBox.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CluOutputBox.Location = new System.Drawing.Point(23, 61);
+            this.CluOutputBox.Location = new System.Drawing.Point(23, 28);
             this.CluOutputBox.Multiline = true;
             this.CluOutputBox.Name = "CluOutputBox";
             this.CluOutputBox.ReadOnly = true;
             this.CluOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.CluOutputBox.Size = new System.Drawing.Size(500, 473);
+            this.CluOutputBox.Size = new System.Drawing.Size(500, 506);
             this.CluOutputBox.TabIndex = 0;
             // 
-            // CluOutputLabel
-            // 
-            this.CluOutputLabel.AutoSize = true;
-            this.CluOutputLabel.Font = new System.Drawing.Font("Microsoft YaHei", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.CluOutputLabel.Location = new System.Drawing.Point(17, 15);
-            this.CluOutputLabel.Name = "CluOutputLabel";
-            this.CluOutputLabel.Size = new System.Drawing.Size(135, 31);
-            this.CluOutputLabel.TabIndex = 1;
-            this.CluOutputLabel.Text = "CluOutput";
-            // 
-            // CluOutputPane
+            // DebugPane
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.CluOutputLabel);
             this.Controls.Add(this.CluOutputBox);
-            this.Name = "CluOutputPane";
+            this.Name = "DebugPane";
             this.Size = new System.Drawing.Size(545, 555);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -69,6 +57,5 @@
         #endregion
 
         private System.Windows.Forms.TextBox CluOutputBox;
-        private System.Windows.Forms.Label CluOutputLabel;
     }
 }
