@@ -280,16 +280,15 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
     <Compile Include="ExcelApi\ExcelFacade.cs" />
     <Compile Include="ExcelApi\IExcelActions.cs" />
-    <Compile Include="Nlu\CluOutputPane.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Nlu\CluOutputPane.Designer.cs">
-      <DependentUpon>CluOutputPane.cs</DependentUpon>
-    </Compile>
+    <Compile Include="ExcelApi\IExcelCommand.cs" />
     <Compile Include="Nlu\CluService.cs" />
     <Compile Include="Infrastructure\Config.cs" />
+    <Compile Include="Nlu\IntentRouter.cs" />
+    <Compile Include="Nlu\NluEntity.cs" />
+    <Compile Include="Nlu\RangeFromConnector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -308,9 +307,6 @@
     <Compile Include="UI\UserControlPane.Designer.cs">
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Nlu\CluOutputPane.resx">
-      <DependentUpon>CluOutputPane.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
