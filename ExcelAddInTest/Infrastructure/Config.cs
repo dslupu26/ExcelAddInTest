@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 
 namespace ExcelAddInTest
 {
+    /// <summary>
+    /// Provides static properties to access configuration settings for Azure services.
+    /// At the moment we have the following properties:
+    /// CLU: AZURE_CLU_ENDPOINT, AZURE_CLU_KEY, AZURE_CLU_PROJECT_NAME, AZURE_CLU_DEPLOYMENT_NAME
+    /// NLU: AZURE_SPEECH_KEY, AZURE_SPEECH_REGION, AZURE_SPEECH_LANGUAGE
+    /// </summary>
     public static class Config
     {
         //CLU

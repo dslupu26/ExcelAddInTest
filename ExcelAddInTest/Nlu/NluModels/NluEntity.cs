@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace ExcelAddInTest.Nlu
 {
+    /// <summary>
+    /// Represents an entity recognized in natural language understanding, 
+    /// including its category, text, position, length, and confidence score.
+    /// </summary>
     public class NluEntity
     {
         public string Category { get; set; }
