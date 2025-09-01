@@ -44,6 +44,8 @@ namespace ExcelAddInTest
             _log = new DebugPaneLogger(_debugControl);
 
             InitializeServices(); // initalizam speech service si clu service
+
+            _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
         }
 
         private void InitializeUserInterface()
@@ -73,7 +75,6 @@ namespace ExcelAddInTest
             {
                 throw new Exception("Problem on Initialize" + ex.Message);
             }
-            _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
         }
 
         private void CellCtxToggle_Click(CommandBarButton Ctrl, ref bool CancelDefault)
