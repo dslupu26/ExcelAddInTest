@@ -282,13 +282,17 @@
   <ItemGroup>
     <Compile Include="ExcelApi\Commands\AddCells.cs" />
     <Compile Include="ExcelApi\Commands\AddSelected.cs" />
+    <Compile Include="ExcelApi\CommandExecutor.cs" />
     <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
     <Compile Include="ExcelApi\ExcelFacade.cs" />
+    <Compile Include="ExcelApi\ICommandExecutor.cs" />
     <Compile Include="ExcelApi\IExcelActions.cs" />
     <Compile Include="ExcelApi\IExcelCommand.cs" />
     <Compile Include="Infrastructure\Logger\DebugPaneLogger.cs" />
     <Compile Include="Infrastructure\Logger\ILogger.cs" />
     <Compile Include="Infrastructure\Logger\PrefixedLogger.cs" />
+    <Compile Include="Nlu\IIntentRouter.cs" />
+    <Compile Include="Nlu\INlu.cs" />
     <Compile Include="Nlu\CluService.cs" />
     <Compile Include="Infrastructure\Config.cs" />
     <Compile Include="Nlu\IntentRouter.cs" />

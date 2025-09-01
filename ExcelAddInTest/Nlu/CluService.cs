@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace ExcelAddInTest
 {
 
-    public class CluService
+    public class CluService : INlu
     {
         //ConversationAnalysisClient is used for interacting with Conversation models form Azure Language Studio
         private readonly ConversationAnalysisClient _client;
@@ -67,11 +67,11 @@ namespace ExcelAddInTest
      
         /// <summary>
         /// Method analyzes sends the utterance to the clu model deployed and receives 
-        /// the top intent and recognized entities
+        /// the top intent and recognized entities.
         /// </summary>
         /// <param name="text">the utterance that is sent</param>
-        /// <returns>NluResult entity that contains the information</returns>
-        public async Task<NluResult> AnalyzeAsync(string text)
+        /// <returns>NluResult entity that contains the information.</returns>
+        public async Task<NluResult> AnalyzeAsync(string text, string language)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace ExcelAddInTest
                             participantId = "user",
                             text = cleaned,
                             modality = "text",
-                            language = "en-US" 
+                            language = language 
                         }
                     },
                     parameters = new

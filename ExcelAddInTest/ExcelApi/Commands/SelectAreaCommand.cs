@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace ExcelAddInTest.ExcelApi.Commands
 {
-    public class SelectAreaCommand
+    public class SelectAreaCommand : IExcelCommand
     {
         private readonly string _range;
 
         public SelectAreaCommand(string range)
         {
-            _range = range;
+            _range = range ?? throw new Exception("SelectAreaCommand error: range might be null.");
         }
         
         public void Execute(IExcelActions excel)
