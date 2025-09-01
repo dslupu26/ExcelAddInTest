@@ -280,6 +280,8 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="ExcelApi\Commands\AddCells.cs" />
+    <Compile Include="ExcelApi\Commands\AddSelected.cs" />
     <Compile Include="ExcelApi\CommandExecutor.cs" />
     <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
     <Compile Include="ExcelApi\ExcelFacade.cs" />
@@ -327,7 +329,6 @@
     <EmbeddedResource Include="UI\UserControlPane.resx">
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="ExcelAddInTest_TemporaryKey.pfx" />
     <None Include="Infrastructure\app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -358,10 +359,11 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ExcelAddInTest_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>
+    </ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>AC7DE5D6F47AF67639869F0E8748921B992F0D18</ManifestCertificateThumbprint>
+  <ManifestCertificateThumbprint>4ED57EC25D2273A47644D54A675F4ACABD30CA10</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
