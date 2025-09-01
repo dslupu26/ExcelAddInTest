@@ -291,6 +291,7 @@
     <Compile Include="Infrastructure\Config.cs" />
     <Compile Include="Nlu\IntentRouter.cs" />
     <Compile Include="Nlu\NluModels\NluEntity.cs" />
+    <Compile Include="Nlu\NluModels\NluResult.cs" />
     <Compile Include="Nlu\RangeFromConnector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
@@ -356,7 +357,7 @@
     <ManifestKeyFile>ExcelAddInTest_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>34D36D2021884AF49933BCA3B612A68F1E9CCCC1</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>AC7DE5D6F47AF67639869F0E8748921B992F0D18</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>

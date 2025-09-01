@@ -2,6 +2,8 @@
 using Azure.AI.Language.Conversations;
 using Azure.Core;
 using Azure.Core.Pipeline;
+using ExcelAddInTest.Nlu;
+using ExcelAddInTest.Nlu.NluModels;
 using Microsoft.Extensions.Azure;
 using Newtonsoft.Json.Linq;
 using System;
@@ -12,39 +14,39 @@ using System.Threading.Tasks;
 
 namespace ExcelAddInTest
 {
-    public class NluEntity
-    {
-        public string Category { get; set; }
-        public string Text { get; set; }
-    }
-
-    public class NluResult
-    {
-        public string TopIntent { get; set; }
-        public List<NluEntity> Entities { get; set; }
-        public string RawJson { get; set; }
-    }
 
     public class CluService
     {
+        //ConversationAnalysisClient is used for interacting with Conversation models form Azure Language Studio
         private readonly ConversationAnalysisClient _client;
         private readonly string _project;
         private readonly string _deployment;
 
+        /// <summary>
+        /// Initializes CluService that handles the interaction with the NLU (Natural Language Model)
+        /// </summary>
+        /// <param name="endpoint">The endpoint for the CLU (Conversational Language Understanding) Service</param>
+        /// <param name="key">The key for the CLU Service</param>
+        /// <param name="projectName">The name of the project</param>
+        /// <param name="deploymentName">The deployment name of the model you want to use for the processing of the utterances</param>
+        /// <exception cref="ArgumentException"></exception>
         public CluService(string endpoint, string key, string projectName, string deploymentName)
         {
             if (string.IsNullOrWhiteSpace(endpoint)) throw new ArgumentException("endpoint missing");
             if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("key missing");
 
+            ///Because of the older version of .NET that we use, set the ssl protocol to Tls12 
+            ///(needed by the azure services)
             var handler = new HttpClientHandler
             {
-                // dacă ești în rețea cu proxy, lasă UseProxy=true (default) sau setează handler.Proxy
                 SslProtocols = SslProtocols.Tls12
             };
             var httpClient = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromSeconds(30)
             };
+            ///used to set the option for our ConversationAnalysisClient class 
+            ///(we need to use the ssl protocol Tls12)
             var opts = new ConversationsClientOptions
             {
                 Retry =
@@ -56,13 +58,19 @@ namespace ExcelAddInTest
                 Transport = new HttpClientTransport(httpClient)
             };
 
-            _client = new ConversationAnalysisClient(new Uri(endpoint.Trim()), new AzureKeyCredential(key.Trim()),opts);
+
+            _client = new ConversationAnalysisClient(new Uri(endpoint.Trim()), new AzureKeyCredential(key.Trim()), opts);
             _project = (projectName ?? "").Trim();
             _deployment = (deploymentName ?? "").Trim();
             
         }
      
-
+        /// <summary>
+        /// Method analyzes sends the utterance to the clu model deployed and receives 
+        /// the top intent and recognized entities
+        /// </summary>
+        /// <param name="text">the utterance that is sent</param>
+        /// <returns>NluResult entity that contains the information</returns>
         public async Task<NluResult> AnalyzeAsync(string text)
         {
             try
@@ -93,9 +101,9 @@ namespace ExcelAddInTest
                 };
 
                 Response resp = await _client.AnalyzeConversationAsync(RequestContent.Create(payload));
-                string raw = resp.Content.ToString(); // JSON brut
+                string raw = resp.Content.ToString(); // raw JSON
 
-                // log minim de erori din corp, dacă există
+                // logging the response for debugging purposes 
                 var jo = JObject.Parse(raw);
                 var error = jo["error"];
                 if (error != null)
@@ -108,7 +116,8 @@ namespace ExcelAddInTest
                     };
                 }
 
-                // unele versiuni pun direct "prediction", altele sub "result.prediction"
+                // some versions use "prediction", others might use "result.prediction"
+                // so we treat the both cases
                 var prediction = jo["result"] != null ? jo["result"]["prediction"] : jo["prediction"];
                 if (prediction == null)
                 {
@@ -121,7 +130,8 @@ namespace ExcelAddInTest
                 }
 
                 string top = (string)(prediction["topIntent"] ?? prediction["top_intent"]) ?? "None";
-
+               
+                // extract entities recognized
                 var entities = new List<NluEntity>();
                 var ents = prediction["entities"] as JArray;
                 if (ents != null)
@@ -136,8 +146,8 @@ namespace ExcelAddInTest
                     }
                 }
 
-                // (opțional) extrage și scorurile pentru debug
-                var intentsArr = prediction["intents"] as JArray;
+                // top intents scores (if they exist, for debug)
+                JArray intentsArr = prediction["intents"] as JArray;
                 if (intentsArr != null && intentsArr.Count > 0)
                 {
                     var sb = new System.Text.StringBuilder();
@@ -155,7 +165,7 @@ namespace ExcelAddInTest
 
                 return new NluResult { TopIntent = top, Entities = entities, RawJson = raw };
             }
-            catch (Azure.RequestFailedException ex)
+            catch (RequestFailedException ex)
             {
                 return new NluResult
                 {
@@ -166,7 +176,7 @@ namespace ExcelAddInTest
             }
             catch (Exception ex)
             {
-                // dezambalăm AggregateException ca să prindem RequestFailedException din interior
+                // dismantling AggregateException to catch RequestFailedException from inside
                 var sb = new System.Text.StringBuilder();
                 sb.AppendLine("[UNHANDLED] " + ex.GetType().Name + ": " + ex.Message);
 

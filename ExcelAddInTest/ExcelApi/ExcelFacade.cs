@@ -8,6 +8,9 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelAddInTest.ExcelApi
 {
+    /// <summary>
+    /// Interface used for interacting with Excel application and ensuring thread safety.
+    /// </summary>
     public sealed class ExcelFacade : IExcelActions
     {
         private readonly Excel.Application _app;
