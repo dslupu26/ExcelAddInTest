@@ -7,13 +7,22 @@ using System.Text;
 using System.Threading.Tasks;
 namespace ExcelAddInTest.Nlu
 {
-    public class IntentRouter
+    public class IntentRouter : IIntentRouter
     {
+
         public IExcelCommand Route(NluModels.NluResult nlu)
         {
             if (nlu == null) return null;
 
-            return null;
+            switch (nlu.TopIntent)
+            {
+                case "SelectArea":
+                    return new SelectAreaCommand(
+                       "A1:B5"  // hardcoded for demo purposes
+                    );
+                default: return null;
+            }
+
         }
 
     }

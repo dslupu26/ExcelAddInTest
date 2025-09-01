@@ -1,5 +1,6 @@
 ﻿using ExcelAddInTest;
 using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Utils;
 using Microsoft.CognitiveServices.Speech;
 using System;
@@ -13,6 +14,7 @@ public class VoiceInterpreter
     private readonly CluService _clu;
     private readonly IExcelActions _excel;
     private readonly ExcelAddInTest.Logging.ILogger _log;
+    private readonly IntentRouter intentRouter;
 
     private CancellationTokenSource _cts;
     private bool _isListening;
