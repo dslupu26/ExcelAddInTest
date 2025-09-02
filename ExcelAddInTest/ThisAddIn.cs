@@ -31,6 +31,10 @@ namespace ExcelAddInTest
         private Office.CommandBarButton _btnToggle;
         private Office.CommandBarButton _ctxToggle;
 
+        /// <summary>
+        EntityDistributor _entityDistributor;
+        /// </summary>
+
         public Microsoft.Office.Tools.CustomTaskPane CluPane => _debugPane;
 
         public VoiceInterpreter Voice { get; private set; }
@@ -50,6 +54,7 @@ namespace ExcelAddInTest
 
         private void InitializeUserInterface()
         {
+
             control = new UserInterface.UserControlPane();
 
             _pane = this.CustomTaskPanes.Add(control, "Excel Voice");
@@ -107,9 +112,12 @@ namespace ExcelAddInTest
             {
                 var clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
-                Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"));
+
+                _entityDistributor = new EntityDistributor(clu);
+
+                Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor);
                 control.SetVoiceInterpreter(Voice);
-            }
+            }   
             return Voice;
         }
 
