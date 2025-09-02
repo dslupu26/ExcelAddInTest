@@ -286,6 +286,7 @@
     <Compile Include="ExcelApi\ExcelFacade.cs" />
     <Compile Include="ExcelApi\IExcelActions.cs" />
     <Compile Include="ExcelApi\IExcelCommand.cs" />
+    <Compile Include="Infrastructure\EntityDistributor.cs" />
     <Compile Include="Infrastructure\Logger\DebugPaneLogger.cs" />
     <Compile Include="Infrastructure\Logger\ILogger.cs" />
     <Compile Include="Infrastructure\Logger\PrefixedLogger.cs" />
@@ -299,6 +300,7 @@
     </Compile>
     <Compile Include="Speech\ListenMode.cs" />
     <Compile Include="Speech\TaskExtentions.cs" />
+    <Compile Include="Speech\VoiceCommandDetails.cs" />
     <Compile Include="Speech\VoiceInterpreter.cs" />
     <Compile Include="UI\DebugPane.cs">
       <SubType>UserControl</SubType>

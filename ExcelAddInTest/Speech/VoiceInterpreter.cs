@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 public class VoiceInterpreter
 {
@@ -18,11 +19,14 @@ public class VoiceInterpreter
     private bool _isListening;
     private VoiceListenOptions _opts;
 
-    public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log)
+    private EntityDistributor _ent;
+
+    public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log, EntityDistributor ent)
     {
         _clu = clu;
         _excel = excel;
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        _ent = ent;
     }
 
     public async Task StartAsync(VoiceListenOptions opts)
@@ -144,9 +148,17 @@ public class VoiceInterpreter
         };
     }
 
+
+    // REMOVE THIS
+    // THIS IS HERE FOR ""BOOKMARKING"" PURPOSES
+    // SO YOU DONT HAVE TO SEARCH FOR THE RAW CLU INPUT ANYMORE
+
     private async Task HandleResultAsync(SpeechRecognitionResult result)
     {
         var text = result.Text?.Trim();
+
+
+        // this line here has the FINAL result
         _log.Info("Final: " + text);
 
         try
@@ -154,8 +166,16 @@ public class VoiceInterpreter
             var nlu = await _clu.AnalyzeAsync(text);
             _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
             _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
+
+
+            // nlu.Entities has the cells; lowkey no need to parse them. again.
+
             foreach (var ent in nlu.Entities)
                 _log.Info($" - {ent.Category}: \"{ent.Text}\"");
+
+
+            // not done yet
+            _ent.ListMaker(result);
         }
         catch (Exception exClu)
         {
