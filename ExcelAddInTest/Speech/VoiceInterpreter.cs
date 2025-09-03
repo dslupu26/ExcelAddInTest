@@ -7,8 +7,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ExcelAddInTest.Logging;
-public class VoiceInterpreter 
+using System.Windows;
+
+public class VoiceInterpreter
 {
     private SpeechRecognizer recognizer;
     private readonly INlu _clu;
@@ -20,11 +21,15 @@ public class VoiceInterpreter
     private bool _isListening;
     private VoiceListenOptions _opts;
 
+    private EntityDistributor _ent;
+
+    public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log, EntityDistributor ent)
     public VoiceInterpreter(INlu clu, ICommandExecutor excel, ILogger log, IIntentRouter intentRouter)
     {
         _clu = clu;
         _exec = excel;
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        _ent = ent;
         this.intentRouter = intentRouter;
     }
 
@@ -147,6 +152,11 @@ public class VoiceInterpreter
         };
     }
 
+
+    // REMOVE THIS
+    // THIS IS HERE FOR ""BOOKMARKING"" PURPOSES
+    // SO YOU DONT HAVE TO SEARCH FOR THE RAW CLU INPUT ANYMORE
+
     /// <summary>
     /// Process the final recognized text, calls CLU for the intent and routes the command, then executes it
     /// </summary>
@@ -155,6 +165,9 @@ public class VoiceInterpreter
     private async Task HandleResultAsync(SpeechRecognitionResult result)
     {
         var text = result.Text?.Trim();
+
+
+        // this line here has the FINAL result
         _log.Info("Final: " + text);
 
 
@@ -171,10 +184,16 @@ public class VoiceInterpreter
             var nlu = await _clu.AnalyzeAsync(text);
             _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
             _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
+
+
+            // nlu.Entities has the cells; lowkey no need to parse them. again.
+
             foreach (var ent in nlu.Entities)
                 _log.Info($" - {ent.Category}: \"{ent.Text}\"");
-            var cmd = intentRouter.Route(nlu);
-            _exec.Execute(cmd);
+
+
+            // not done yet
+            _ent.ListMaker(result);
         }
         catch (Exception exClu)
         {

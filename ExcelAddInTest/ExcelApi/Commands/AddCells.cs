@@ -8,6 +8,8 @@ namespace ExcelAddInTest.ExcelApi.Commands
     {
         private readonly List<string> _addresses;
 
+        private EntityDistributor _entityDistrib;
+
         public AddCells(List<string> addresses)
         {
             _addresses = addresses ?? throw new ArgumentNullException(nameof(addresses));
