@@ -13,11 +13,17 @@ using System.Xml.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
 using ExcelAddInTest.Logging;
+using ExcelAddInTest.Nlu;
 
 namespace ExcelAddInTest
 {
     public partial class ThisAddIn
     {
+        private INlu _clu;
+        private IIntentRouter router;
+        private ExcelApi.ICommandExecutor _executor;
+        private IIntentRouter _intentRouter;
+
         private SynchronizationContext _excelCtx;
         private ExcelApi.IExcelActions _excel;
 
@@ -28,8 +34,8 @@ namespace ExcelAddInTest
 
         private Microsoft.Office.Tools.CustomTaskPane _pane;
         private UserInterface.UserControlPane control;
-        private Office.CommandBarButton _btnToggle;
-        private Office.CommandBarButton _ctxToggle;
+        private CommandBarButton _btnToggle;
+        private CommandBarButton _ctxToggle;
 
         public Microsoft.Office.Tools.CustomTaskPane CluPane => _debugPane;
 
@@ -41,11 +47,12 @@ namespace ExcelAddInTest
             _excelCtx = SynchronizationContext.Current;
             
             EnsureDebugPane(); //initializam panoul de debug
+            
             _log = new DebugPaneLogger(_debugControl);
-
+            _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
+            
             InitializeServices(); // initalizam speech service si clu service
 
-            _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
         }
 
         private void InitializeUserInterface()
@@ -77,6 +84,7 @@ namespace ExcelAddInTest
             }
         }
 
+        //add a toggle button in the right click meniu of a cell
         private void CellCtxToggle_Click(CommandBarButton Ctrl, ref bool CancelDefault)
         {
             try
@@ -103,11 +111,13 @@ namespace ExcelAddInTest
 
         public VoiceInterpreter InitializeServices()
         {
+            _executor = new ExcelApi.CommandExecutor(_excel, new PrefixedLogger(_log, "[CmdExec]"));
+            _intentRouter = new IntentRouter();
             if (Voice == null)
             {
-                var clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
+                _clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
-                Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"));
+                Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _intentRouter);
                 control.SetVoiceInterpreter(Voice);
             }
             return Voice;

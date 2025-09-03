@@ -7,24 +7,25 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
-public class VoiceInterpreter
+using ExcelAddInTest.Logging;
+public class VoiceInterpreter 
 {
     private SpeechRecognizer recognizer;
-    private readonly CluService _clu;
-    private readonly IExcelActions _excel;
-    private readonly ExcelAddInTest.Logging.ILogger _log;
-    private readonly IntentRouter intentRouter;
+    private readonly INlu _clu;
+    private readonly ICommandExecutor _exec;
+    private readonly ILogger _log;
+    private readonly IIntentRouter intentRouter;
 
     private CancellationTokenSource _cts;
     private bool _isListening;
     private VoiceListenOptions _opts;
 
-    public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log)
+    public VoiceInterpreter(INlu clu, ICommandExecutor excel, ILogger log, IIntentRouter intentRouter)
     {
         _clu = clu;
-        _excel = excel;
+        _exec = excel;
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        this.intentRouter = intentRouter;
     }
 
     public async Task StartAsync(VoiceListenOptions opts)
@@ -118,7 +119,7 @@ public class VoiceInterpreter
     private void WireEvents()
     {
         recognizer.SessionStarted += (s, e) => _log.Info("SessionStarted");
-        recognizer.SessionStopped += (s, e) => _log.Info("SessionStopped");
+        recognizer.SessionStopped += (s, e) => { _log.Info("SessionStopped"); };
         recognizer.SpeechStartDetected += (s, e) => _log.Info("SpeechStartDetected");
         recognizer.SpeechEndDetected += (s, e) => _log.Info("SpeechEndDetected");
 
@@ -146,11 +147,25 @@ public class VoiceInterpreter
         };
     }
 
+    /// <summary>
+    /// Process the final recognized text, calls CLU for the intent and routes the command, then executes it
+    /// </summary>
+    /// <param name="result"></param>
+    /// <returns></returns>
     private async Task HandleResultAsync(SpeechRecognitionResult result)
     {
         var text = result.Text?.Trim();
         _log.Info("Final: " + text);
 
+
+        //If the speech service is still listening and identifies no text,
+        //(e.g. the person does not speak or the speech is not recognized),
+        //we return without doing anything, so that we do not call CLU with empty text.
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _log.Warn("No speech recognized.");
+            return;
+        }
         try
         {
             var nlu = await _clu.AnalyzeAsync(text);
@@ -158,6 +173,8 @@ public class VoiceInterpreter
             _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
             foreach (var ent in nlu.Entities)
                 _log.Info($" - {ent.Category}: \"{ent.Text}\"");
+            var cmd = intentRouter.Route(nlu);
+            _exec.Execute(cmd);
         }
         catch (Exception exClu)
         {
