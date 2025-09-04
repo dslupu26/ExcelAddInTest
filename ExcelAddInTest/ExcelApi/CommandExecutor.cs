@@ -1,16 +1,12 @@
 ﻿using ExcelAddInTest.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ExcelAddInTest.ExcelApi
 {
     /// <summary>
     /// Executes commands available in the IExcelActions interface through IExcelCommand interface.
     /// </summary>
-    public class CommandExecutor
+    public class CommandExecutor : ICommandExecutor
     {
         private readonly IExcelActions _excel;
         private readonly ILogger _log;

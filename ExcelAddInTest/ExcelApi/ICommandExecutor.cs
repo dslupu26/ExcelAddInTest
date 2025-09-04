@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace ExcelAddInTest.ExcelApi
 {
+    /// <summary>
+    /// Used to acces the methods able in the CommandExecutor class.
+    /// </summary>
     public interface ICommandExecutor
     {
         void Execute(IExcelCommand command);

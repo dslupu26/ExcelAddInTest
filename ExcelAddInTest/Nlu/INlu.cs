@@ -9,6 +9,6 @@ namespace ExcelAddInTest.Nlu
 {
     public interface INlu
     {
-        Task<NluResult> AnalyzeAsync(string text, string language = "en-US");
+        Task<NluResult> AnalyzeAsync(string text);
     }
 }

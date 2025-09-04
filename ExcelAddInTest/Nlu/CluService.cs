@@ -71,7 +71,7 @@ namespace ExcelAddInTest
         /// </summary>
         /// <param name="text">the utterance that is sent</param>
         /// <returns>NluResult entity that contains the information.</returns>
-        public async Task<NluResult> AnalyzeAsync(string text, string language)
+        public async Task<NluResult> AnalyzeAsync(string text)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace ExcelAddInTest
                             participantId = "user",
                             text = cleaned,
                             modality = "text",
-                            language = language 
+                            language = "en-US"
                         }
                     },
                     parameters = new

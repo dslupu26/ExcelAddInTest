@@ -331,6 +331,7 @@
     <EmbeddedResource Include="UI\UserControlPane.resx">
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="ExcelAddInTest_2_TemporaryKey.pfx" />
     <None Include="Infrastructure\app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -361,11 +362,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>
-    </ManifestKeyFile>
+    <ManifestKeyFile>ExcelAddInTest_2_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-  <ManifestCertificateThumbprint>4ED57EC25D2273A47644D54A675F4ACABD30CA10</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>A4E57E7E023F9E594BDD6C3DB6972BD37539AA55</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
