@@ -1,31 +1,22 @@
 ﻿using Microsoft.Office.Core;
-using Microsoft.Office.Tools.Excel;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using System.Windows.Forms.Integration;
-using System.Xml.Linq;
-using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
 using ExcelAddInTest.Logging;
 using ExcelAddInTest.Nlu;
+using ExcelAddInTest.ExcelApi;
 
 namespace ExcelAddInTest
 {
     public partial class ThisAddIn
     {
-        private INlu _clu;
-        private IIntentRouter router;
-        private ExcelApi.ICommandExecutor _executor;
+        private CluService _clu;
+        private CommandExecutor _executor;
         private IIntentRouter _intentRouter;
 
         private SynchronizationContext _excelCtx;
-        private ExcelApi.IExcelActions _excel;
+        private IExcelActions _excel;
 
         private Microsoft.Office.Tools.CustomTaskPane _debugPane;
 
@@ -123,10 +114,9 @@ namespace ExcelAddInTest
                 _clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
 
-                _entityDistributor = new EntityDistributor(clu);
+                _entityDistributor = new EntityDistributor(_clu);
 
-                Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor);
-                Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _intentRouter);
+                Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
                 control.SetVoiceInterpreter(Voice);
             }   
             return Voice;

@@ -1,5 +1,6 @@
 ﻿using ExcelAddInTest;
 using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.Logging;
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Utils;
 using Microsoft.CognitiveServices.Speech;
@@ -23,8 +24,8 @@ public class VoiceInterpreter
 
     private EntityDistributor _ent;
 
-    public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log, EntityDistributor ent)
-    public VoiceInterpreter(INlu clu, ICommandExecutor excel, ILogger log, IIntentRouter intentRouter)
+
+    public VoiceInterpreter(CluService clu, ICommandExecutor excel, ExcelAddInTest.Logging.ILogger log, EntityDistributor ent, IIntentRouter intentRouter)
     {
         _clu = clu;
         _exec = excel;
