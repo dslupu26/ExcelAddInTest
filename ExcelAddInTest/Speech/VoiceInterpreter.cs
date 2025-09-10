@@ -1,10 +1,13 @@
 ﻿using ExcelAddInTest;
 using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.ExcelApi.Commands;
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Utils;
 using Microsoft.CognitiveServices.Speech;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,6 +25,8 @@ public class VoiceInterpreter
     private VoiceListenOptions _opts;
 
     private EntityDistributor _ent;
+
+    private Dictionary<string, IExcelCommand> _commands;
 
     public VoiceInterpreter(CluService clu, IExcelActions excel, ExcelAddInTest.Logging.ILogger log, EntityDistributor ent)
     {
@@ -165,7 +170,7 @@ public class VoiceInterpreter
 
         try
         {
-            var nlu = await _clu.AnalyzeAsync(text);
+            var nlu = await _clu.AnalyzeAsync(text, Config.SpeechLanguage);
             _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
             _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
 
@@ -176,8 +181,9 @@ public class VoiceInterpreter
                 _log.Info($" - {ent.Category}: \"{ent.Text}\"");
 
 
-            // not done yet
-            _ent.ListMaker(result);
+            string intent = nlu.TopIntent;
+
+            CommandExecutor.ExecuteIntent(intent, _ent, _log, _excel);
         }
         catch (Exception exClu)
         {

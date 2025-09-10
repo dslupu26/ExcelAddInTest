@@ -115,6 +115,9 @@ namespace ExcelAddInTest
 
                 _entityDistributor = new EntityDistributor(clu);
 
+                if (_excel == null)
+                    MessageBox.Show("ThisAddIn.cs says '_excel is null'. no clue what to do now");
+
                 Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor);
                 control.SetVoiceInterpreter(Voice);
             }   

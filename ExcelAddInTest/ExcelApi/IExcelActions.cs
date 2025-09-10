@@ -14,7 +14,7 @@ namespace ExcelAddInTest.ExcelApi
 
         Excel.Range GetCurrentSelection();
         Excel.Range GetCell(string addr);
-        void SelectRange(string address);
+        void SelectRange(string fp, string sp);
 
     }
 }

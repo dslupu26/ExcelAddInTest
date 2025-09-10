@@ -4,15 +4,17 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelAddInTest.ExcelApi.Commands
 {
-    public class AddCells
+    public class AddCells : IExcelCommand
     {
         private readonly List<string> _addresses;
+        private readonly string _destination;
 
         private EntityDistributor _entityDistrib;
 
-        public AddCells(List<string> addresses)
+        public AddCells(List<string> addresses, string destination)
         {
             _addresses = addresses ?? throw new ArgumentNullException(nameof(addresses));
+            _destination = destination; // its fine if its null i guess. it just adds and doesnt put it anywhere ig even if its stupid
         }
 
         public void Execute(IExcelActions excel)
@@ -32,11 +34,23 @@ namespace ExcelAddInTest.ExcelApi.Commands
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"cell reading failed ||| {address}: {ex.Message}");
+                    Console.WriteLine($"<< add cells command >> cell reading failed ||| {address}: {ex.Message}");
                 }
             }
 
-            Console.WriteLine($"cell sum : {sum}");
+            if (string.IsNullOrEmpty(_destination) == false)
+            {
+                try
+                {
+                    Excel.Range destinationCell = excel.GetCell(_destination);
+                    if (destinationCell != null)
+                        destinationCell.Value2 = sum;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"<< add cells command >> could not write to destionation ||| {ex.Message}");
+                }
+            }
         }
     }
 }

@@ -365,7 +365,7 @@
     </ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-  <ManifestCertificateThumbprint>4ED57EC25D2273A47644D54A675F4ACABD30CA10</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>4ED57EC25D2273A47644D54A675F4ACABD30CA10</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>

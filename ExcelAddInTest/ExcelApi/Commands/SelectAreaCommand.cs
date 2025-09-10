@@ -8,16 +8,17 @@ namespace ExcelAddInTest.ExcelApi.Commands
 {
     public class SelectAreaCommand : IExcelCommand
     {
-        private readonly string _range;
+        private readonly string _fp, _sp;
 
-        public SelectAreaCommand(string range)
+        public SelectAreaCommand(string firstPoint, string secondPoint)
         {
-            _range = range ?? throw new Exception("SelectAreaCommand error: range might be null.");
+            _fp = _fp ?? throw new Exception("<< select area command >> first point is null in select area command");
+            _sp = _sp ?? throw new Exception("<< select area command >> second point is null in select area command");
         }
         
         public void Execute(IExcelActions excel)
         {
-            excel.SelectRange(_range);
+            excel.SelectRange(_fp, _sp);
         }
     }
 }
