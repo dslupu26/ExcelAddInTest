@@ -8,6 +8,7 @@ using ExcelAddInTest.Nlu;
 using ExcelAddInTest.ExcelApi;
 using ExcelAddInTest.UserInterface;
 using Microsoft.Office.Tools;
+using ExcelAddInTest.Speech;
 
 namespace ExcelAddInTest
 {
@@ -30,8 +31,18 @@ namespace ExcelAddInTest
         private CommandBarButton _btnToggle;
         private CommandBarButton _ctxToggle;
 
-        EntityDistributor _entityDistributor;
+        private Microsoft.Office.Tools.CustomTaskPane _settingsPane;
+        private SettingsPane _settingsControl;
 
+
+        EntityDistributor _entityDistributor;
+        private VoiceListenOptions VoiceListenOptions = new VoiceListenOptions()
+        {
+            Mode = ListenMode.Continuous,
+            AutoStopAfter = TimeSpan.FromSeconds(15),
+            MaxDuration = TimeSpan.FromSeconds(30)
+            // Language/Initial/End silence are fixed in the class
+        };
         public Microsoft.Office.Tools.CustomTaskPane CluPane => _debugPane;
 
         public VoiceInterpreter Voice { get; private set; }

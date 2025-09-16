@@ -24,17 +24,11 @@ public class VoiceInterpreter
 
     private readonly EntityDistributor _ent;
 
-    public VoiceInterpreter(
-        INlu clu,                           // <- folosește interfața aici
-        ICommandExecutor exec,
-        ILogger log,
-        EntityDistributor ent,
-        IIntentRouter intentRouter)
 
     public VoiceInterpreter(CluService clu, ICommandExecutor excel, ILogger log, EntityDistributor ent, IIntentRouter intentRouter)
     {
         _clu = clu ?? throw new ArgumentNullException(nameof(clu));
-        _exec = exec;
+        _exec = excel;
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _ent = ent;
         _intentRouter = intentRouter;

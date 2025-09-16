@@ -136,8 +136,6 @@
             this.Controls.Add(this.stopBtn);
             this.Controls.Add(this.startBtn);
             this.Controls.Add(this.nameLabel);
-            this.Controls.Add(this.Output);
-            this.Controls.Add(this.OutputBox);
             this.Controls.Add(this.Input);
             this.Controls.Add(this.InputBox);
             this.Name = "UserControlPane";
