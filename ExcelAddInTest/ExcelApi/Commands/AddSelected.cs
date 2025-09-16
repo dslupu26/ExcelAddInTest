@@ -3,7 +3,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelAddInTest.ExcelApi.Commands
 {
-    public class AddSelected
+    public class AddSelected : IExcelCommand
     {
         public void Execute(IExcelActions excel)
         {

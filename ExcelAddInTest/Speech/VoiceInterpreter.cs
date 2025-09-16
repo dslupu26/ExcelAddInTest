@@ -1,11 +1,16 @@
 ﻿using ExcelAddInTest;
 using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.ExcelApi.Commands;
+
 using ExcelAddInTest.Logging;
+
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Utils;
 using Microsoft.CognitiveServices.Speech;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,6 +28,7 @@ public class VoiceInterpreter
     private VoiceListenOptions _opts = new VoiceListenOptions();
 
     private readonly EntityDistributor _ent;
+    private Dictionary<string, IExcelCommand> _commands;
 
     public VoiceInterpreter(
         INlu clu,                           // <- folosește interfața aici
@@ -30,6 +36,7 @@ public class VoiceInterpreter
         ILogger log,
         EntityDistributor ent,
         IIntentRouter intentRouter)
+
     {
         _clu = clu ?? throw new ArgumentNullException(nameof(clu));
         _exec = exec;
@@ -222,23 +229,23 @@ public class VoiceInterpreter
         //we return without doing anything, so that we do not call CLU with empty text.
         if (string.IsNullOrWhiteSpace(text))
         {
-            _log.Warn("No speech recognized.");
-            return;
-        } 
-        try 
-        { 
-            var nlu = await _clu.AnalyzeAsync(text);
+            var nlu = await _clu.AnalyzeAsync(text, Config.SpeechLanguage);
+
             _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
             _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
             // nlu.Entities has the cells; lowkey no need to parse them. again.
             foreach (var ent in nlu.Entities)
                 _log.Info($" - {ent.Category}: \"{ent.Text}\"");
-            // not done yet
-            _ent.ListMaker(result);
-        } 
-        catch (Exception exClu) 
-        { 
-            _log.Error("[CLU] ERROR", exClu); 
-        } 
+
+
+            string intent = nlu.TopIntent;
+
+            CommandExecutor.ExecuteIntent(intent, _ent, _log, _excel);
+        }
+        catch (Exception exClu)
+        {
+            _log.Error("[CLU] ERROR", exClu);
+        }
+
     }
 }

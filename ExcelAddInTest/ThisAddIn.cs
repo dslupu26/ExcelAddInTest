@@ -154,7 +154,6 @@ namespace ExcelAddInTest
                     Config.CluDeployment);
 
                 _entityDistributor = new EntityDistributor(_clu);
-
                 Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
                 control.SetVoiceInterpreter(Voice);
             }   
