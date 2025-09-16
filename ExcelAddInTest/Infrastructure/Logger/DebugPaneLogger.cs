@@ -1,6 +1,5 @@
 ﻿// Logging/DebugPaneLogger.cs
 using System;
-using ExcelAddInTest;
 
 namespace ExcelAddInTest.Logging
 {

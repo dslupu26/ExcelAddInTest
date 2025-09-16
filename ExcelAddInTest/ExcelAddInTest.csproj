@@ -313,6 +313,12 @@
     <Compile Include="UI\DebugPane.Designer.cs">
       <DependentUpon>DebugPane.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\SettingsPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\SettingsPane.Designer.cs">
+      <DependentUpon>SettingsPane.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\UserControlPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -328,9 +334,13 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="UI\SettingsPane.resx">
+      <DependentUpon>SettingsPane.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\UserControlPane.resx">
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="ExcelAddInTest_2_TemporaryKey.pfx" />
     <None Include="Infrastructure\app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -361,11 +371,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>
-    </ManifestKeyFile>
+    <ManifestKeyFile>ExcelAddInTest_2_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>4ED57EC25D2273A47644D54A675F4ACABD30CA10</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>C20DC81067E29789A095CE3A8DADA57CBAB2A7CD</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>

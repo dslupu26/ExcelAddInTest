@@ -7,11 +7,14 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ExcelAddInTest.ExcelApi
 {
+    /// <summary>
+    /// Used to acces the methods able in the ExcelFacade class.
+    /// Available methods that we know how to execute in Excel.
+    /// </summary>
     public interface IExcelActions
     {
         void ToggleMainPane();
         void WriteFormula(string address, string formula);
-
         Excel.Range GetCurrentSelection();
         Excel.Range GetCell(string addr);
         void SelectRange(string fp, string sp);

@@ -1,25 +1,24 @@
 ﻿using Microsoft.Office.Core;
-using Microsoft.Office.Tools.Excel;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using System.Windows.Forms.Integration;
-using System.Xml.Linq;
-using Excel = Microsoft.Office.Interop.Excel;
 using Office = Microsoft.Office.Core;
 using ExcelAddInTest.Logging;
+using ExcelAddInTest.Nlu;
+using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.UserInterface;
+using Microsoft.Office.Tools;
 
 namespace ExcelAddInTest
 {
     public partial class ThisAddIn
     {
+        private CluService _clu;
+        private CommandExecutor _executor;
+        private IIntentRouter _intentRouter;
+
         private SynchronizationContext _excelCtx;
-        private ExcelApi.IExcelActions _excel;
+        private IExcelActions _excel;
 
         private Microsoft.Office.Tools.CustomTaskPane _debugPane;
 
@@ -28,8 +27,19 @@ namespace ExcelAddInTest
 
         private Microsoft.Office.Tools.CustomTaskPane _pane;
         private UserInterface.UserControlPane control;
-        private Office.CommandBarButton _btnToggle;
-        private Office.CommandBarButton _ctxToggle;
+        private CommandBarButton _btnToggle;
+        private CommandBarButton _ctxToggle;
+
+        private Microsoft.Office.Tools.CustomTaskPane _settingsPane;
+        private ExcelAddInTest.SettingsPane _settingsControl;
+
+        private VoiceListenOptions VoiceListenOptions = new VoiceListenOptions()
+        {
+            Mode = ListenMode.Continuous,
+            AutoStopAfter = TimeSpan.FromSeconds(15),
+            MaxDuration = TimeSpan.FromSeconds(30)
+            // Language/Initial/End silence are fixed in the class
+        };
 
         /// <summary>
         EntityDistributor _entityDistributor;
@@ -45,11 +55,13 @@ namespace ExcelAddInTest
             _excelCtx = SynchronizationContext.Current;
             
             EnsureDebugPane(); //initializam panoul de debug
+            EnsureSettingsPane(); //initializam panoul de setari
+            
             _log = new DebugPaneLogger(_debugControl);
-
+            _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
+            
             InitializeServices(); // initalizam speech service si clu service
 
-            _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
         }
 
         private void InitializeUserInterface()
@@ -82,6 +94,7 @@ namespace ExcelAddInTest
             }
         }
 
+        //add a toggle button in the right click meniu of a cell
         private void CellCtxToggle_Click(CommandBarButton Ctrl, ref bool CancelDefault)
         {
             try
@@ -106,19 +119,42 @@ namespace ExcelAddInTest
             control.SetDebugPane(_debugPane);
         }
 
+        public void EnsureSettingsPane()
+        {
+            if (_settingsPane != null) return;   // avoid double-creating
+            _settingsControl = new SettingsPane();
+
+            // 1) sync UI from the current shared options
+            _settingsControl.LoadOptions(VoiceListenOptions);
+
+            // 2) when user changes settings in the pane, update the shared instance
+            //    and push live updates into the recognizer
+            _settingsControl.OptionsChanged += opts =>
+            {
+                VoiceListenOptions = opts;           // keep the one-and-only instance up to date
+                Voice?.UpdateOptions(VoiceListenOptions);
+            };
+
+            _settingsPane = this.CustomTaskPanes.Add(_settingsControl, "Settings Pane");
+            _settingsPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
+            _settingsPane.Width = 340;
+            // _settingsPane.Height = 200;
+            _settingsPane.Visible = false;
+            control.SetSettingsPane(_settingsPane);
+            control.SetOptionsRef(VoiceListenOptions);
+        }
+
         public VoiceInterpreter InitializeServices()
         {
+            _executor = new ExcelApi.CommandExecutor(_excel, new PrefixedLogger(_log, "[CmdExec]"));
+            _intentRouter = new IntentRouter();
             if (Voice == null)
             {
-                var clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
+                _clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
 
-                _entityDistributor = new EntityDistributor(clu);
-
-                if (_excel == null)
-                    MessageBox.Show("ThisAddIn.cs says '_excel is null'. no clue what to do now");
-
-                Voice = new VoiceInterpreter(clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor);
+                _entityDistributor = new EntityDistributor(_clu);
+                Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
                 control.SetVoiceInterpreter(Voice);
             }   
             return Voice;
