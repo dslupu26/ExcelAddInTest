@@ -43,7 +43,7 @@ namespace ExcelAddInTest
 
             try
             {
-                var nlu = await _clu.AnalyzeAsync(text, Config.SpeechLanguage);
+                var nlu = await _clu.AnalyzeAsync(text);
 
                 string intent = null;
 

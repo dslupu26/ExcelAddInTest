@@ -8,13 +8,14 @@ using ExcelAddInTest.Nlu;
 using ExcelAddInTest.ExcelApi;
 using ExcelAddInTest.UserInterface;
 using Microsoft.Office.Tools;
+using ExcelAddInTest.Speech;
 
 namespace ExcelAddInTest
 {
     public partial class ThisAddIn
     {
         private CluService _clu;
-        private CommandExecutor _executor;
+        private ExcelFacade _executor;
         private IIntentRouter _intentRouter;
 
         private SynchronizationContext _excelCtx;
@@ -31,8 +32,10 @@ namespace ExcelAddInTest
         private CommandBarButton _ctxToggle;
 
         private Microsoft.Office.Tools.CustomTaskPane _settingsPane;
-        private ExcelAddInTest.SettingsPane _settingsControl;
+        private SettingsPane _settingsControl;
 
+
+        EntityDistributor _entityDistributor;
         private VoiceListenOptions VoiceListenOptions = new VoiceListenOptions()
         {
             Mode = ListenMode.Continuous,
@@ -40,11 +43,6 @@ namespace ExcelAddInTest
             MaxDuration = TimeSpan.FromSeconds(30)
             // Language/Initial/End silence are fixed in the class
         };
-
-        /// <summary>
-        EntityDistributor _entityDistributor;
-        /// </summary>
-
         public Microsoft.Office.Tools.CustomTaskPane CluPane => _debugPane;
 
         public VoiceInterpreter Voice { get; private set; }
@@ -146,7 +144,7 @@ namespace ExcelAddInTest
 
         public VoiceInterpreter InitializeServices()
         {
-            _executor = new ExcelApi.CommandExecutor(_excel, new PrefixedLogger(_log, "[CmdExec]"));
+            _excel = new ExcelFacade(Application, _pane, _excelCtx);
             _intentRouter = new IntentRouter();
             if (Voice == null)
             {
@@ -154,7 +152,8 @@ namespace ExcelAddInTest
                     Config.CluDeployment);
 
                 _entityDistributor = new EntityDistributor(_clu);
-                Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
+
+                Voice = new VoiceInterpreter(_clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
                 control.SetVoiceInterpreter(Voice);
             }   
             return Voice;
@@ -162,16 +161,6 @@ namespace ExcelAddInTest
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-        }
-
-        internal void AppendToInputBox(string v)
-        {
-            control.AppendInput(v);
-        }
-
-        internal void AppendToOutputBox(string v)
-        {
-            control.AppendOutput(v);
         }
     }
 }
