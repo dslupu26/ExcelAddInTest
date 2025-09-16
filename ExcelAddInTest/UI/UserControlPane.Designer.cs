@@ -34,8 +34,7 @@
             this.startBtn = new System.Windows.Forms.Button();
             this.stopBtn = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.Output = new System.Windows.Forms.Label();
-            this.OutputBox = new System.Windows.Forms.TextBox();
+            this.settingsBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // InputBox
@@ -104,34 +103,27 @@
             this.button1.AutoSize = true;
             this.button1.BackColor = System.Drawing.Color.Olive;
             this.button1.Font = new System.Drawing.Font("French Script MT", 19.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(385, 377);
+            this.button1.Location = new System.Drawing.Point(191, 437);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(154, 54);
+            this.button1.Size = new System.Drawing.Size(146, 54);
             this.button1.TabIndex = 7;
             this.button1.Text = "Debug";
             this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.DebugButton_Click);
             // 
-            // Output
+            // settingsBtn
             // 
-            this.Output.AutoSize = true;
-            this.Output.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Output.ForeColor = System.Drawing.Color.Gainsboro;
-            this.Output.Location = new System.Drawing.Point(35, 217);
-            this.Output.Name = "Output";
-            this.Output.Size = new System.Drawing.Size(70, 22);
-            this.Output.TabIndex = 3;
-            this.Output.Text = "Output";
-            // 
-            // OutputBox
-            // 
-            this.OutputBox.Location = new System.Drawing.Point(39, 242);
-            this.OutputBox.Multiline = true;
-            this.OutputBox.Name = "OutputBox";
-            this.OutputBox.ReadOnly = true;
-            this.OutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.OutputBox.Size = new System.Drawing.Size(500, 106);
-            this.OutputBox.TabIndex = 2;
+            this.settingsBtn.BackColor = System.Drawing.Color.Gainsboro;
+            this.settingsBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.settingsBtn.Font = new System.Drawing.Font("French Script MT", 19.8F, System.Drawing.FontStyle.Bold);
+            this.settingsBtn.ForeColor = System.Drawing.Color.Black;
+            this.settingsBtn.Location = new System.Drawing.Point(39, 437);
+            this.settingsBtn.Name = "settingsBtn";
+            this.settingsBtn.Size = new System.Drawing.Size(146, 54);
+            this.settingsBtn.TabIndex = 8;
+            this.settingsBtn.Text = "Settings";
+            this.settingsBtn.UseVisualStyleBackColor = false;
+            this.settingsBtn.Click += new System.EventHandler(this.settingsBtn_Click);
             // 
             // UserControlPane
             // 
@@ -139,6 +131,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
+            this.Controls.Add(this.settingsBtn);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.stopBtn);
             this.Controls.Add(this.startBtn);
@@ -163,7 +156,6 @@
         private System.Windows.Forms.Button startBtn;
         private System.Windows.Forms.Button stopBtn;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label Output;
-        private System.Windows.Forms.TextBox OutputBox;
+        private System.Windows.Forms.Button settingsBtn;
     }
 }
