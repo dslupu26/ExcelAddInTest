@@ -6,6 +6,8 @@ using Office = Microsoft.Office.Core;
 using ExcelAddInTest.Logging;
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.UserInterface;
+using Microsoft.Office.Tools;
 
 namespace ExcelAddInTest
 {
@@ -28,6 +30,17 @@ namespace ExcelAddInTest
         private CommandBarButton _btnToggle;
         private CommandBarButton _ctxToggle;
 
+        private Microsoft.Office.Tools.CustomTaskPane _settingsPane;
+        private ExcelAddInTest.SettingsPane _settingsControl;
+
+        private VoiceListenOptions VoiceListenOptions = new VoiceListenOptions()
+        {
+            Mode = ListenMode.Continuous,
+            AutoStopAfter = TimeSpan.FromSeconds(15),
+            MaxDuration = TimeSpan.FromSeconds(30)
+            // Language/Initial/End silence are fixed in the class
+        };
+
         /// <summary>
         EntityDistributor _entityDistributor;
         /// </summary>
@@ -42,6 +55,7 @@ namespace ExcelAddInTest
             _excelCtx = SynchronizationContext.Current;
             
             EnsureDebugPane(); //initializam panoul de debug
+            EnsureSettingsPane(); //initializam panoul de setari
             
             _log = new DebugPaneLogger(_debugControl);
             _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
@@ -103,6 +117,31 @@ namespace ExcelAddInTest
             _debugPane.Height = 560;
             _debugPane.Visible = true;
             control.SetDebugPane(_debugPane);
+        }
+
+        public void EnsureSettingsPane()
+        {
+            if (_settingsPane != null) return;   // avoid double-creating
+            _settingsControl = new SettingsPane();
+
+            // 1) sync UI from the current shared options
+            _settingsControl.LoadOptions(VoiceListenOptions);
+
+            // 2) when user changes settings in the pane, update the shared instance
+            //    and push live updates into the recognizer
+            _settingsControl.OptionsChanged += opts =>
+            {
+                VoiceListenOptions = opts;           // keep the one-and-only instance up to date
+                Voice?.UpdateOptions(VoiceListenOptions);
+            };
+
+            _settingsPane = this.CustomTaskPanes.Add(_settingsControl, "Settings Pane");
+            _settingsPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
+            _settingsPane.Width = 340;
+            // _settingsPane.Height = 200;
+            _settingsPane.Visible = false;
+            control.SetSettingsPane(_settingsPane);
+            control.SetOptionsRef(VoiceListenOptions);
         }
 
         public VoiceInterpreter InitializeServices()

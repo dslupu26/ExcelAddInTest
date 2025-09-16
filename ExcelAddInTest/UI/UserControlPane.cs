@@ -16,14 +16,17 @@ namespace ExcelAddInTest.UserInterface
     {
         private VoiceInterpreter _voice;
         private CustomTaskPane _debugPane;
-        private VoiceListenOptions vlo = new VoiceListenOptions()
+        private CustomTaskPane _settingsPane;
+        private VoiceListenOptions vlo = new VoiceListenOptions() // Default setting
         {
             Mode = ListenMode.Continuous,
             AutoStopAfter = null,
-            MaxDuration = TimeSpan.FromSeconds(30),
-            Language = Config.SpeechLanguage,
-            InitialSilenceTimeoutMs = 5000,
-            EndSilenceTimeoutMs = 2000
+            MaxDuration = TimeSpan.FromSeconds(30) // nu asculta mai mult de 30 de secunde decat daca il schimbam noi
+
+            // Set By Default
+            // Language = Config.SpeechLanguage,
+            // InitialSilenceTimeoutMs = 5000,
+            // EndSilenceTimeoutMs = 3000
         };
         public UserControlPane()
         {
@@ -44,10 +47,17 @@ namespace ExcelAddInTest.UserInterface
             _debugPane = debugPane;
         }
 
+        public void SetSettingsPane(CustomTaskPane settingsPane)
+        {
+            _settingsPane = settingsPane;
+        }
+
         private async void StartRecording(object sender, EventArgs e)
         {
             await _voice.StartAsync(vlo);
         }
+
+        public void SetOptionsRef(VoiceListenOptions opts) => this.vlo = opts;
 
         private async void StopRecording(object sender, EventArgs e)
         {
@@ -80,6 +90,20 @@ namespace ExcelAddInTest.UserInterface
                 return;
             }
             this.OutputBox.AppendText(v + Environment.NewLine);
+        }
+
+        private void UserControlPane_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void settingsBtn_Click(object sender, EventArgs e)
+        {
+            if (_settingsPane != null)
+            {
+                _settingsPane.Visible = !_settingsPane.Visible;
+                return;
+            };
         }
     }
 }
