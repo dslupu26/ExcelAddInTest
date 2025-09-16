@@ -36,6 +36,7 @@
             this.startBtn = new System.Windows.Forms.Button();
             this.stopBtn = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.settingsBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // InputBox
@@ -125,13 +126,27 @@
             this.button1.AutoSize = true;
             this.button1.BackColor = System.Drawing.Color.Olive;
             this.button1.Font = new System.Drawing.Font("French Script MT", 19.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(385, 377);
+            this.button1.Location = new System.Drawing.Point(191, 437);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(154, 54);
+            this.button1.Size = new System.Drawing.Size(146, 54);
             this.button1.TabIndex = 7;
             this.button1.Text = "Debug";
             this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.DebugButton_Click);
+            // 
+            // settingsBtn
+            // 
+            this.settingsBtn.BackColor = System.Drawing.Color.Gainsboro;
+            this.settingsBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.settingsBtn.Font = new System.Drawing.Font("French Script MT", 19.8F, System.Drawing.FontStyle.Bold);
+            this.settingsBtn.ForeColor = System.Drawing.Color.Black;
+            this.settingsBtn.Location = new System.Drawing.Point(39, 437);
+            this.settingsBtn.Name = "settingsBtn";
+            this.settingsBtn.Size = new System.Drawing.Size(146, 54);
+            this.settingsBtn.TabIndex = 8;
+            this.settingsBtn.Text = "Settings";
+            this.settingsBtn.UseVisualStyleBackColor = false;
+            this.settingsBtn.Click += new System.EventHandler(this.settingsBtn_Click);
             // 
             // UserControlPane
             // 
@@ -139,6 +154,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.DimGray;
+            this.Controls.Add(this.settingsBtn);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.stopBtn);
             this.Controls.Add(this.startBtn);
@@ -149,6 +165,7 @@
             this.Controls.Add(this.InputBox);
             this.Name = "UserControlPane";
             this.Size = new System.Drawing.Size(580, 560);
+            this.Load += new System.EventHandler(this.UserControlPane_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -164,5 +181,6 @@
         private System.Windows.Forms.Button startBtn;
         private System.Windows.Forms.Button stopBtn;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button settingsBtn;
     }
 }

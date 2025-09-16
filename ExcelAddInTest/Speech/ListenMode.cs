@@ -14,7 +14,7 @@ public sealed class VoiceListenOptions
     public TimeSpan? AutoStopAfter { get; set; } = null;
 
     // dacă vrei un „hard cap” când mergi manual (ex. max 30s)
-    public TimeSpan? MaxDuration { get; set; } = null;
+    public TimeSpan? MaxDuration { get; set; } = TimeSpan.FromSeconds(30);
 
     // limbă + sensibilitate la pauze
     public string Language { get; set; } = Config.SpeechLanguage; // "en-US"
