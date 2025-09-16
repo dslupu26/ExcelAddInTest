@@ -18,7 +18,7 @@ public class VoiceInterpreter
 {
     private SpeechRecognizer recognizer;
     private readonly INlu _clu;
-    private readonly ICommandExecutor _exec;
+    private readonly IExcelActions _exec;
     private readonly ILogger _log;
     private readonly IIntentRouter _intentRouter;
 
@@ -32,14 +32,14 @@ public class VoiceInterpreter
 
     public VoiceInterpreter(
         INlu clu,                           // <- folosește interfața aici
-        ICommandExecutor exec,
+        IExcelActions exec,
         ILogger log,
         EntityDistributor ent,
         IIntentRouter intentRouter)
 
     {
         _clu = clu ?? throw new ArgumentNullException(nameof(clu));
-        _exec = excel;
+        _exec = exec;
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _ent = ent;
         _intentRouter = intentRouter;
@@ -223,24 +223,27 @@ public class VoiceInterpreter
     {
         var text = result.Text?.Trim(); 
         // this line here has the FINAL result
-        _log.Info("Final: " + text); 
+        _log.Info("Final: " + text);
         //If the speech service is still listening and identifies no text,
         //(e.g. the person does not speak or the speech is not recognized),
         //we return without doing anything, so that we do not call CLU with empty text.
-        if (string.IsNullOrWhiteSpace(text))
+        try
         {
-            var nlu = await _clu.AnalyzeAsync(text, Config.SpeechLanguage);
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                var nlu = await _clu.AnalyzeAsync(text);
 
-            _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
-            _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
-            // nlu.Entities has the cells; lowkey no need to parse them. again.
-            foreach (var ent in nlu.Entities)
-                _log.Info($" - {ent.Category}: \"{ent.Text}\"");
+                _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
+                _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
+                // nlu.Entities has the cells; lowkey no need to parse them. again.
+                foreach (var ent in nlu.Entities)
+                    _log.Info($" - {ent.Category}: \"{ent.Text}\"");
 
 
-            string intent = nlu.TopIntent;
+                string intent = nlu.TopIntent;
 
-            CommandExecutor.ExecuteIntent(intent, _ent, _log, _excel);
+                CommandExecutor.ExecuteIntent(intent, _ent, _log, _exec);
+            }
         }
         catch (Exception exClu)
         {

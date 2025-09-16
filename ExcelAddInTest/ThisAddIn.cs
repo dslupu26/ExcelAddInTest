@@ -15,7 +15,7 @@ namespace ExcelAddInTest
     public partial class ThisAddIn
     {
         private CluService _clu;
-        private CommandExecutor _executor;
+        private ExcelFacade _executor;
         private IIntentRouter _intentRouter;
 
         private SynchronizationContext _excelCtx;
@@ -144,7 +144,7 @@ namespace ExcelAddInTest
 
         public VoiceInterpreter InitializeServices()
         {
-            _executor = new ExcelApi.CommandExecutor(_excel, new PrefixedLogger(_log, "[CmdExec]"));
+            _excel = new ExcelFacade(Application, _pane, _excelCtx);
             _intentRouter = new IntentRouter();
             if (Voice == null)
             {
@@ -152,7 +152,8 @@ namespace ExcelAddInTest
                     Config.CluDeployment);
 
                 _entityDistributor = new EntityDistributor(_clu);
-                Voice = new VoiceInterpreter(_clu, _executor, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
+
+                Voice = new VoiceInterpreter(_clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
                 control.SetVoiceInterpreter(Voice);
             }   
             return Voice;
