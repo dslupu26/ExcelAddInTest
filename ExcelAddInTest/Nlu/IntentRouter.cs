@@ -18,7 +18,7 @@ namespace ExcelAddInTest.Nlu
             {
                 case "SelectArea":
                     return new SelectAreaCommand(
-                       "A1:B5"  // hardcoded for demo purposes
+                       "A1", "B5"  // hardcoded for demo purposes
                     );
                 default: return null;
             }

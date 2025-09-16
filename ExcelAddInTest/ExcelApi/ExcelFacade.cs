@@ -60,8 +60,8 @@ namespace ExcelAddInTest.ExcelApi
             OnUi(() => _pane.Visible = !_pane.Visible);
         }
 
-        public void SelectRange(string address) => OnUi(() => 
-            _app.Range[address].Select()
+        public void SelectRange(string fp, string sp) => OnUi(() => 
+            _app.Range[fp, sp].Select()
         );
 
         public void WriteFormula(string address, string formula) => OnUi(() => 
