@@ -73,24 +73,7 @@ namespace ExcelAddInTest.UserInterface
             };
         }
 
-        internal void AppendInput(string v)
-        {   if(InvokeRequired)
-            {
-                this.Invoke(new Action<string>(AppendInput), v);
-                return;
-            }
-            this.InputBox.AppendText(v + Environment.NewLine);
-        }
-
-        internal void AppendOutput(string v)
-        {
-            if(InvokeRequired)
-            {
-                this.Invoke(new Action<string>(AppendOutput), v);
-                return;
-            }
-            this.OutputBox.AppendText(v + Environment.NewLine);
-        }
+        
 
         private void UserControlPane_Load(object sender, EventArgs e)
         {

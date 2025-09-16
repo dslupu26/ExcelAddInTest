@@ -6,10 +6,10 @@ namespace ExcelAddInTest
     partial class SettingsPane
     {
         private System.ComponentModel.IContainer components = null;
-        private CheckBox chkContinuous;
+        private RadioButton chkContinuous;
         private TrackBar tbSeconds;
         private Label lblSeconds;
-        private CheckBox chkSingle;
+        private RadioButton chkSingle;
 
 
         // NEW: numeric guides
@@ -30,10 +30,10 @@ namespace ExcelAddInTest
 
         private void InitializeComponent()
         {
-            this.chkContinuous = new System.Windows.Forms.CheckBox();
+            this.chkContinuous = new System.Windows.Forms.RadioButton();
             this.tbSeconds = new System.Windows.Forms.TrackBar();
             this.lblSeconds = new System.Windows.Forms.Label();
-            this.chkSingle = new System.Windows.Forms.CheckBox();
+            this.chkSingle = new System.Windows.Forms.RadioButton();
 
             // NEW: create table + labels
             this.tlpTicks = new System.Windows.Forms.TableLayoutPanel();
