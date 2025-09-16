@@ -81,5 +81,10 @@ namespace ExcelAddInTest.UserInterface
             }
             this.OutputBox.AppendText(v + Environment.NewLine);
         }
+
+        private void UserControlPane_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

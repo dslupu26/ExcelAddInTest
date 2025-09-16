@@ -30,12 +30,12 @@
         {
             this.InputBox = new System.Windows.Forms.TextBox();
             this.Input = new System.Windows.Forms.Label();
-            this.OutputBox = new System.Windows.Forms.TextBox();
-            this.Output = new System.Windows.Forms.Label();
             this.nameLabel = new System.Windows.Forms.Label();
             this.startBtn = new System.Windows.Forms.Button();
             this.stopBtn = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.Output = new System.Windows.Forms.Label();
+            this.OutputBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // InputBox
@@ -58,27 +58,6 @@
             this.Input.Size = new System.Drawing.Size(54, 22);
             this.Input.TabIndex = 1;
             this.Input.Text = "Input";
-            // 
-            // OutputBox
-            // 
-            this.OutputBox.Location = new System.Drawing.Point(39, 242);
-            this.OutputBox.Multiline = true;
-            this.OutputBox.Name = "OutputBox";
-            this.OutputBox.ReadOnly = true;
-            this.OutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.OutputBox.Size = new System.Drawing.Size(500, 106);
-            this.OutputBox.TabIndex = 2;
-            // 
-            // Output
-            // 
-            this.Output.AutoSize = true;
-            this.Output.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Output.ForeColor = System.Drawing.Color.Gainsboro;
-            this.Output.Location = new System.Drawing.Point(35, 217);
-            this.Output.Name = "Output";
-            this.Output.Size = new System.Drawing.Size(70, 22);
-            this.Output.TabIndex = 3;
-            this.Output.Text = "Output";
             // 
             // nameLabel
             // 
@@ -133,6 +112,27 @@
             this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.DebugButton_Click);
             // 
+            // Output
+            // 
+            this.Output.AutoSize = true;
+            this.Output.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Output.ForeColor = System.Drawing.Color.Gainsboro;
+            this.Output.Location = new System.Drawing.Point(35, 217);
+            this.Output.Name = "Output";
+            this.Output.Size = new System.Drawing.Size(70, 22);
+            this.Output.TabIndex = 3;
+            this.Output.Text = "Output";
+            // 
+            // OutputBox
+            // 
+            this.OutputBox.Location = new System.Drawing.Point(39, 242);
+            this.OutputBox.Multiline = true;
+            this.OutputBox.Name = "OutputBox";
+            this.OutputBox.ReadOnly = true;
+            this.OutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.OutputBox.Size = new System.Drawing.Size(500, 106);
+            this.OutputBox.TabIndex = 2;
+            // 
             // UserControlPane
             // 
             this.AccessibleName = "UserC";
@@ -149,6 +149,7 @@
             this.Controls.Add(this.InputBox);
             this.Name = "UserControlPane";
             this.Size = new System.Drawing.Size(580, 560);
+            this.Load += new System.EventHandler(this.UserControlPane_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -158,11 +159,11 @@
 
         private System.Windows.Forms.TextBox InputBox;
         private System.Windows.Forms.Label Input;
-        private System.Windows.Forms.TextBox OutputBox;
-        private System.Windows.Forms.Label Output;
         private System.Windows.Forms.Label nameLabel;
         private System.Windows.Forms.Button startBtn;
         private System.Windows.Forms.Button stopBtn;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label Output;
+        private System.Windows.Forms.TextBox OutputBox;
     }
 }

@@ -28,9 +28,7 @@ namespace ExcelAddInTest
         private CommandBarButton _btnToggle;
         private CommandBarButton _ctxToggle;
 
-        /// <summary>
         EntityDistributor _entityDistributor;
-        /// </summary>
 
         public Microsoft.Office.Tools.CustomTaskPane CluPane => _debugPane;
 
@@ -124,16 +122,6 @@ namespace ExcelAddInTest
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-        }
-
-        internal void AppendToInputBox(string v)
-        {
-            control.AppendInput(v);
-        }
-
-        internal void AppendToOutputBox(string v)
-        {
-            control.AppendOutput(v);
         }
     }
 }

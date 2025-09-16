@@ -25,7 +25,7 @@ public class VoiceInterpreter
     private EntityDistributor _ent;
 
 
-    public VoiceInterpreter(CluService clu, ICommandExecutor excel, ExcelAddInTest.Logging.ILogger log, EntityDistributor ent, IIntentRouter intentRouter)
+    public VoiceInterpreter(CluService clu, ICommandExecutor excel, ILogger log, EntityDistributor ent, IIntentRouter intentRouter)
     {
         _clu = clu;
         _exec = excel;
