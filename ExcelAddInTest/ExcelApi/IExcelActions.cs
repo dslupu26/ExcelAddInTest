@@ -21,5 +21,7 @@ namespace ExcelAddInTest.ExcelApi
         Excel.Range GetRange(string fp, string sp);
         double AddCells(Excel.Range rs);
 
+        bool IsCellInRange(string cell, string fp, string sp);
+
     }
 }

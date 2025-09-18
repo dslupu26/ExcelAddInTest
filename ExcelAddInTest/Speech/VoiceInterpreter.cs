@@ -230,8 +230,16 @@ public class VoiceInterpreter
         };
     }
 
+    private string ExcelCellRx(string text)
+    {
+        Regex Rx = new Regex(@"[A-Z]{1,3}[0-9]{1,3}");
+        text = Rx.Replace(text, m => m.Value + " ");
+        return text;
+    }
+    
     private string NormalizeForExcel(SpeechRecognitionResult e)
     {
+
         // detailed results are in the JSON
         var json = e.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
 
@@ -258,7 +266,8 @@ public class VoiceInterpreter
 
         // first if statement "?": returns null or pick.Text if it's not null
         // second if statement "??": if the first is null, returns e.Result.Text
-        var bestText = pick?.Text ?? e.Text;
+        //pick?.Text ?? e.Text
+        var bestText = ExcelCellRx(pick?.Text ?? e.Text);
         return bestText;
     }
 

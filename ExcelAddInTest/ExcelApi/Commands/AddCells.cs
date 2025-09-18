@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows.Documents;
 using System.Windows.Media;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -15,18 +16,23 @@ namespace ExcelAddInTest.ExcelApi.Commands
         private string _destination;
         private EntityDistributor _entityDistrib;
         private AddCellsMode _mode;
+        private bool _isDestinationInAddresses = false;
         public AddCells(List<string> addresses, string destination, AddCellsMode mode)
         {
             _addresses = addresses ?? throw new ArgumentNullException(nameof(addresses));
             _destination = destination; // its fine if its null i guess. it just adds and doesnt put it anywhere ig even if its stupid
             _mode = mode;
         }
-
+        /// <summary>
+        /// Executes a command to add cells based on the specified mode (present in <see cref="AddCellsMode"/>).
+        /// </summary>
+        /// <param name="excel"></param>
         public void Execute(IExcelActions excel)
         {
             if (_destination == null)
-            { 
-               _destination = _addresses.LastOrDefault();
+            {
+                _destination = _addresses.LastOrDefault();
+                _isDestinationInAddresses = true;
             }
             if (_mode == AddCellsMode.Range)
                 AddCellsInRange(excel);
@@ -35,16 +41,25 @@ namespace ExcelAddInTest.ExcelApi.Commands
             else
                 Console.WriteLine("<< add cells command >> unknown type");
         }
-
+        /// <summary>
+        /// Adds cells in a rectangular range.
+        /// If the destination cell is not in the range, it adds its value to the sum as well.
+        /// </summary>
+        /// <param name="excel"></param>
         private void AddCellsInRange(IExcelActions excel) 
         {
+           
             double sum = 0;
                 try
                 {
-                    Excel.Range rs = excel.GetRange(_addresses.First(), _addresses[_addresses.Count()-2]);
+                    var last = _addresses.LastOrDefault();
+                    var secondLast = _addresses.Count() > 2 ? _addresses[_addresses.Count() - 2] : null;
+                    var end = (!_isDestinationInAddresses && secondLast != null) ? secondLast : last;
+                    Excel.Range rs = excel.GetRange(_addresses.First(), end);
                     sum = excel.AddCells(rs);
-                    sum = sum + double.Parse(excel.GetCell(_addresses.Last()).Value2.ToString(), CultureInfo.InvariantCulture);
-            }
+                    if (excel.IsCellInRange(_destination, _addresses.First(), end) == false)
+                        sum = sum + double.Parse(excel.GetCell(_addresses.Last()).Value2.ToString(), CultureInfo.InvariantCulture);
+                }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"<< add cells command >> cell reading failed |||: {ex.Message}");
@@ -64,6 +79,11 @@ namespace ExcelAddInTest.ExcelApi.Commands
                 }
             }
         }
+        /// <summary>
+        /// Adds cells individually from a list of addresses.
+        /// The destination cell is included in the sum.
+        /// </summary>
+        /// <param name="excel"></param>
         private void AddCellsInList(IExcelActions excel)
         {
             double sum = 0;

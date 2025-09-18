@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.CognitiveServices.Speech.Dialog;
+using System;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -86,5 +87,15 @@ namespace ExcelAddInTest.ExcelApi
         public Excel.Range GetRange(string fp, string sp) => OnUi(() => ws.Range[fp, sp]);
 
         public double AddCells(Excel.Range rs) => OnUi(() => _app.WorksheetFunction.Sum(rs));
+
+        public bool IsCellInRange(string cell, string fp, string sp)
+        {
+            return OnUi(() =>
+            {
+                var range = ws.Range[fp, sp];
+                var target = ws.Range[cell];
+                return _app.Application.Intersect(range, target) != null;
+            });
+        }
     }
 }
