@@ -307,6 +307,8 @@
     <Compile Include="Infrastructure\Logger\DebugPaneLogger.cs" />
     <Compile Include="Infrastructure\Logger\ILogger.cs" />
     <Compile Include="Infrastructure\Logger\PrefixedLogger.cs" />
+    <Compile Include="Infrastructure\Text\SpeechLexicon.cs" />
+    <Compile Include="Infrastructure\Text\TextNormalizer.cs" />
     <Compile Include="Nlu\IIntentRouter.cs" />
     <Compile Include="Nlu\INlu.cs" />
     <Compile Include="Nlu\CluService.cs" />
@@ -392,7 +394,7 @@
     <ManifestKeyFile>ExcelAddInTest_2_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>A4E57E7E023F9E594BDD6C3DB6972BD37539AA55</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>C20DC81067E29789A095CE3A8DADA57CBAB2A7CD</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
