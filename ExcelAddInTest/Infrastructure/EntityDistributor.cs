@@ -73,8 +73,6 @@ namespace ExcelAddInTest
 
                 string intent = nlu.TopIntent ?? "None";
 
-                nlu.Entities = (List<NluEntity>)EnsureCellParsing(nlu.Entities);
-
                 if (intentHandler.TryGetValue(intent, out var handler))
                     handler(nlu.Entities);
 
@@ -85,30 +83,7 @@ namespace ExcelAddInTest
             }
         }
 
-        private IList<NluEntity> EnsureCellParsing(IList<NluEntity> entities)
-        {
-            Regex CellRx = new Regex(@"[A-Z]{1,3}[1-9]{0,3}");
-            var list_to_return = new List<NluEntity>(entities);
-            if (entities.Any(e => e.Category == "Cell"))
-            {
-                var cell_list = entities.Where(e => e.Category == "Cell").Select(e => e.Text).ToList();
-                foreach (var cell in cell_list)
-                { 
-                    var m = CellRx.Matches(cell);
-                    var all = m.Cast<Match>().Select(mm => mm.Value).ToList();
-                    if (all.Count > 1) 
-                    {
-                        foreach (var found_cell in all)
-                        {
-                            list_to_return.Add(new NluEntity { Category = "Cell", Text = found_cell });
-                        }
-                    }
-                    else list_to_return.Add(new NluEntity { Category = "Cell", Text = cell });
-                }
-                
-            }
-            return entities;
-        }
+        
 
 
 
