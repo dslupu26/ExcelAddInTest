@@ -157,7 +157,7 @@ namespace ExcelAddInTest
                 else if (rangeConnector is true)
                     mode = AddCellsMode.Range;
 
-                _log.Raw($"AddCells command will execute the {mode} version");
+                    _log.Raw($"AddCells command will execute the {mode} version");
                 if (string.IsNullOrEmpty(dest))
                     dest = null;
                 var cmd = new AddCells(cells, dest, mode);
