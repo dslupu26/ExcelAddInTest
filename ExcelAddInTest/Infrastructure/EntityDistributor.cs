@@ -1,14 +1,30 @@
-﻿using ExcelAddInTest.ExcelApi.Commands;
+﻿using ExcelAddInTest.ExcelApi;
+using ExcelAddInTest.ExcelApi.Commands;
+using ExcelAddInTest.ExcelApi.Commands.Enums;
+using ExcelAddInTest.Logging;
 using ExcelAddInTest.Nlu;
+using ExcelAddInTest.Nlu.NluModels;
 using Microsoft.CognitiveServices.Speech;
+using Microsoft.Office.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Markup;
 
 namespace ExcelAddInTest
 {
+    public static class DictExt
+    {
+
+        public static T Get<T>(this Dictionary<string, object> d, string key)
+            => d.TryGetValue(key, out var o) && o is T t ? t : default;
+
+         public static bool GetBool(this Dictionary<string, object> d, string key)
+            => d.TryGetValue(key, out var o) && o is bool b && b;
+    }
 
     public class EntityDistributor
     {
@@ -17,15 +33,18 @@ namespace ExcelAddInTest
         private Dictionary<Type, Dictionary<string, object>> commandEntities;
         private Dictionary<string, Action<IReadOnlyList<NluEntity>>> intentHandler;
 
-
         private List<string> cellAddresses;
         private string cellDestination;
         private string intent;
 
-        public EntityDistributor(CluService clu)
+        private ICommandExecutor _executor;
+        private ILogger _log;
+
+        public EntityDistributor(CluService clu, ICommandExecutor executor, ILogger log)
         {
             _clu = clu;
-
+            _executor = executor;
+            _log = log;
             commandEntities = new Dictionary<Type, Dictionary<string, object>>();
 
             intentHandler = new Dictionary<string, Action<IReadOnlyList<NluEntity>>>
@@ -33,23 +52,28 @@ namespace ExcelAddInTest
                 ["AddCells"] = HAddCells,
                 ["SelectArea"] = HSelectArea
             };
+
         }
 
-        public async Task AnalyzeAsync(SpeechRecognitionResult result)
+        public async Task AnalyzeAsync(string result)
         {
-            var text = result.Text?.Trim();
+            var text = result.Trim();
             if (string.IsNullOrEmpty(text))
                 return;
 
             try
             {
                 var nlu = await _clu.AnalyzeAsync(text);
-
-                string intent = null;
-
+                _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
+                _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
+                // nlu.Entities has the cells; lowkey no need to parse them. again.
                 foreach (var ent in nlu.Entities)
-                    if (ent.Category.ToLower() == "topintent")
-                        intent = ent.Text;
+                    _log.Info($" - {ent.Category}: \"{ent.Text}\"");
+
+
+                string intent = nlu.TopIntent ?? "None";
+
+                nlu.Entities = (List<NluEntity>)EnsureCellParsing(nlu.Entities);
 
                 if (intentHandler.TryGetValue(intent, out var handler))
                     handler(nlu.Entities);
@@ -61,7 +85,30 @@ namespace ExcelAddInTest
             }
         }
 
-
+        private IList<NluEntity> EnsureCellParsing(IList<NluEntity> entities)
+        {
+            Regex CellRx = new Regex(@"[A-Z]{1,3}[1-9]{0,3}");
+            var list_to_return = new List<NluEntity>(entities);
+            if (entities.Any(e => e.Category == "Cell"))
+            {
+                var cell_list = entities.Where(e => e.Category == "Cell").Select(e => e.Text).ToList();
+                foreach (var cell in cell_list)
+                { 
+                    var m = CellRx.Matches(cell);
+                    var all = m.Cast<Match>().Select(mm => mm.Value).ToList();
+                    if (all.Count > 1) 
+                    {
+                        foreach (var found_cell in all)
+                        {
+                            list_to_return.Add(new NluEntity { Category = "Cell", Text = found_cell });
+                        }
+                    }
+                    else list_to_return.Add(new NluEntity { Category = "Cell", Text = cell });
+                }
+                
+            }
+            return entities;
+        }
 
 
 
@@ -78,31 +125,72 @@ namespace ExcelAddInTest
 
         private void HAddCells(IReadOnlyList<NluEntity> entities)
         {
-            var factors = new List<string>();
+            var cell_list = new List<string>();
+            var destination = new List<string>();
 
-            string destination = null;
-
+            bool destinationbool = false;
             bool destinationConnector = false;
+            bool rangeConnector = false;
+            bool listConnector = false;
 
             foreach (var entity in entities)
             {
-                if (entity.Category == "Cell")
+                switch (entity.Category)
                 {
-                    if (!destinationConnector)
-                        factors.Add(entity.Text);
-                    else
-                        destination = entity.Text;
+                    case "Cell": cell_list.Add(entity.Text); break;
+                    case "RangeConnector": rangeConnector = true; break;
+                    case "ListConnector": listConnector = true; break;
+                    case "Destination": { destination.Add(entity.Text); destinationbool = true; break; }
+                    case "DestinationConnector": destinationConnector = true; break;
+                    case null: break;
                 }
-
-                if (entity.Category == "RangeConnector" && entity.Text.Equals("to"))
-                    destinationConnector = true;
             }
+
+            //we need to think about how we want this to operate first so for now the default
+            //will be that we add everything to the destination cell, included
+            /*if (destinationbool && cell_list.Take(cell_list.Count - 1).Contains(destination.First()))
+                cell_list.RemoveAt(cell_list.Count - 1); // remove last cell if its also the destination*/
 
             commandEntities[typeof(AddCells)] = new Dictionary<string, object>
             {
-                ["factors"] = factors,
-                ["destination"] = destination
+                ["cells"] = cell_list,
+                ["destination"] = destination,
+                ["listconnector"] = listConnector,
+                ["rangeconnector"] = rangeConnector,
+                ["destinationconnector"] = destinationConnector
             };
+            ExecuteIfPossible(typeof(AddCells));
+        }
+
+        private void ExecuteIfPossible(Type t)
+        { 
+            Dictionary<string,object> d;
+            if (!commandEntities.TryGetValue(t, out d))
+                return;
+
+            if (t == typeof(AddCells))
+            {
+                AddCellsMode mode = AddCellsMode.None;
+                var cells = d.Get<List<string>>("cells");
+                string dest = d.Get<List<string>>("destination").FirstOrDefault();
+                var listConnector = d.GetBool("listconnector");
+                var rangeConnector = d.GetBool("rangeconnector");
+                var destConnector = d.GetBool("destinationconnector");
+
+                if (listConnector is true)
+                    mode = AddCellsMode.List;
+                else if (rangeConnector is true)
+                    mode = AddCellsMode.Range;
+
+                _log.Raw($"AddCells command will execute the {mode} version");
+                if (string.IsNullOrEmpty(dest))
+                    dest = null;
+                var cmd = new AddCells(cells, dest, mode);
+
+                if (cmd != null)
+                    _executor.Execute(cmd);
+                    
+            }
         }
 
         private void HSelectArea(IReadOnlyList<NluEntity> entities)

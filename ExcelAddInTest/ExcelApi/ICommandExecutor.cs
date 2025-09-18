@@ -12,5 +12,6 @@ namespace ExcelAddInTest.ExcelApi
     public interface ICommandExecutor
     {
         void Execute(IExcelCommand command);
+
     }
 }

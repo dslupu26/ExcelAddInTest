@@ -8,11 +8,15 @@ using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Utils;
 using Microsoft.CognitiveServices.Speech;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media.Animation;
 
 public class VoiceInterpreter
 {
@@ -56,6 +60,7 @@ public class VoiceInterpreter
 
         var config = SpeechConfig.FromSubscription(Config.SpeechKey, Config.SpeechRegion);
         config.SpeechRecognitionLanguage = _opts.Language;
+        config.OutputFormat = OutputFormat.Detailed; //we want to get the NBest list from the recognizer
 
         // time-out-uri de liniște (în ms)
         config.SetProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
@@ -63,27 +68,32 @@ public class VoiceInterpreter
         config.SetProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
                            _opts.EndSilenceTimeoutMs.ToString());
 
-        recognizer = new SpeechRecognizer(config);
-        WireEvents();
+       
 
         if (_opts.Mode == ListenMode.SingleUtterance)
         {
+            _log.Info("Started (speak now)");
             try
             {
+                var recognizer = new SpeechRecognizer(config);
                 var result = await recognizer.RecognizeOnceAsync().WithCancellation(_cts.Token);
-                await HandleResultAsync(result);
+                var bestText = NormalizeForExcel(result);
+                await HandleResultAsync(bestText);
+                recognizer?.Dispose();
             }
             catch (OperationCanceledException)
             {
                 _log.Warn("Single-utterance canceled.");
             }
             finally
-            {
+            {               
                 await StopAsync();
             }
             return;
         }
 
+        recognizer = new SpeechRecognizer(config);
+        WireEvents();
         // Continuous
         await recognizer.StartContinuousRecognitionAsync();
         _log.Info("Started (speak now)");
@@ -204,7 +214,11 @@ public class VoiceInterpreter
         {
             _log.Info("Recognized reason: " + e.Result.Reason);
             if (e.Result.Reason == ResultReason.RecognizedSpeech)
-                await HandleResultAsync(e.Result);
+            {
+                var bestText = NormalizeForExcel(e.Result);
+                await HandleResultAsync(bestText);
+            }
+               
         };
 
         recognizer.Canceled += (s, e) =>
@@ -216,12 +230,44 @@ public class VoiceInterpreter
         };
     }
 
+    private string NormalizeForExcel(SpeechRecognitionResult e)
+    {
+        // detailed results are in the JSON
+        var json = e.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
+
+        //now we will extract the NBest list from the JSON. NBest list contains alternative texts and their scores
+        JsonDocument doc = JsonDocument.Parse(json);
+        var nbest = doc.RootElement.GetProperty("NBest").EnumerateArray()
+                                   .Select(selector => new
+                                   {
+                                       Text = selector.GetProperty("Display").GetString(),
+                                       Confidence = selector.TryGetProperty("Confidence", out var conf) ? conf.GetDouble() : 0.0
+                                   }).ToList();
+        _log.Info("NBest alternatives:");
+        foreach (var alt in nbest)
+            _log.Info($" - \"{alt.Text}\" (Confidence: {alt.Confidence})");
+
+        //Regex for cell addresses (e.g. A1, B2, AA10, etc.)
+        var cellRx = new Regex(@"\b[A-Z]{1,3}[0-9]{1,3}\b");
+
+        // pick the alternative that has the most cell addresses, then by confidence
+        var pick = nbest
+            .OrderByDescending(x => cellRx.Matches(x.Text ?? "").Count)
+            .ThenByDescending(x => x.Confidence)
+            .FirstOrDefault();
+
+        // first if statement "?": returns null or pick.Text if it's not null
+        // second if statement "??": if the first is null, returns e.Result.Text
+        var bestText = pick?.Text ?? e.Text;
+        return bestText;
+    }
+
     /// <summary>
     /// Procesează textul final: cheamă CLU, routează comanda și o execută.
     /// </summary>
-    private async Task HandleResultAsync(SpeechRecognitionResult result)
+    private async Task HandleResultAsync(string result)
     {
-        var text = result.Text?.Trim(); 
+        var text = result.Trim(); 
         // this line here has the FINAL result
         _log.Info("Final: " + text);
         //If the speech service is still listening and identifies no text,
@@ -231,7 +277,7 @@ public class VoiceInterpreter
         {
             if (!string.IsNullOrWhiteSpace(text))
             {
-                var nlu = await _clu.AnalyzeAsync(text);
+                /*var nlu = await _clu.AnalyzeAsync(text);
 
                 _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
                 _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
@@ -240,9 +286,9 @@ public class VoiceInterpreter
                     _log.Info($" - {ent.Category}: \"{ent.Text}\"");
 
 
-                string intent = nlu.TopIntent;
+                string intent = nlu.TopIntent;*/
 
-                CommandExecutor.ExecuteIntent(intent, _ent, _log, _exec);
+                await _ent.AnalyzeAsync(result);
             }
         }
         catch (Exception exClu)

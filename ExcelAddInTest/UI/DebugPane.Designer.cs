@@ -39,7 +39,7 @@
             this.CluOutputBox.Name = "CluOutputBox";
             this.CluOutputBox.ReadOnly = true;
             this.CluOutputBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.CluOutputBox.Size = new System.Drawing.Size(500, 506);
+            this.CluOutputBox.Size = new System.Drawing.Size(844, 231);
             this.CluOutputBox.TabIndex = 0;
             // 
             // DebugPane
@@ -48,7 +48,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.CluOutputBox);
             this.Name = "DebugPane";
-            this.Size = new System.Drawing.Size(545, 555);
+            this.Size = new System.Drawing.Size(893, 289);
             this.ResumeLayout(false);
             this.PerformLayout();
 

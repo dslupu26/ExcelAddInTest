@@ -15,7 +15,7 @@ namespace ExcelAddInTest
     public partial class ThisAddIn
     {
         private CluService _clu;
-        private ExcelFacade _executor;
+        private ExcelAddInTest.ExcelApi.ICommandExecutor _executor;
         private IIntentRouter _intentRouter;
 
         private SynchronizationContext _excelCtx;
@@ -59,6 +59,7 @@ namespace ExcelAddInTest
             _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
             
             InitializeServices(); // initalizam speech service si clu service
+            
 
         }
 
@@ -69,7 +70,7 @@ namespace ExcelAddInTest
 
             _pane = this.CustomTaskPanes.Add(control, "Excel Voice");
             _pane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
-            _pane.Width = 580;
+            _pane.Width = 340;
             _pane.Visible = true;
             CommandBar addinsBar = null;
             try
@@ -111,8 +112,8 @@ namespace ExcelAddInTest
             _debugControl = new DebugPane();
             _debugPane = this.CustomTaskPanes.Add(_debugControl, "Debug Pane");
             _debugPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionFloating;
-            _debugPane.Width = 550;
-            _debugPane.Height = 560;
+            _debugPane.Width = 893; 
+            _debugPane.Height = 330;
             _debugPane.Visible = true;
             control.SetDebugPane(_debugPane);
         }
@@ -145,13 +146,14 @@ namespace ExcelAddInTest
         public VoiceInterpreter InitializeServices()
         {
             _excel = new ExcelFacade(Application, _pane, _excelCtx);
+            _executor = new CommandExecutor(_excel, new PrefixedLogger(_log, "[CmdExec] "));
             _intentRouter = new IntentRouter();
             if (Voice == null)
             {
                 _clu = new CluService(Config.CluEndpoint, Config.CluKey, Config.CluProjectName,
                     Config.CluDeployment);
 
-                _entityDistributor = new EntityDistributor(_clu);
+                _entityDistributor = new EntityDistributor(_clu,_executor, new PrefixedLogger(_log,"[EntDist] "));
 
                 Voice = new VoiceInterpreter(_clu, _excel, new PrefixedLogger(_log, "[Speech]"), _entityDistributor, _intentRouter);
                 control.SetVoiceInterpreter(Voice);
