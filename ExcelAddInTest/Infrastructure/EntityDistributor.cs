@@ -176,7 +176,17 @@ namespace ExcelAddInTest
 
                 if (cmd != null)
                     _executor.Execute(cmd);
-                    
+            }
+
+            if (t == typeof(SelectAreaCommand))
+            {
+                var fp = d.Get<string>("firstPoint");
+                var sp = d.Get<string>("secondPoint");
+
+                var cmd = new SelectAreaCommand(fp, sp);
+
+                if (cmd != null)
+                    _executor.Execute(cmd);
             }
         }
 
@@ -190,17 +200,17 @@ namespace ExcelAddInTest
 
             // this here assumes that we select from A to B, and just that; not multiple areas or other shenanigans
 
-            if (cells.Count() == 2)
-            {
-                firstPoint = cells[0];
-                secondPoint = cells[1];
-            }
+            firstPoint = cells.FirstOrDefault();
+            secondPoint = cells.LastOrDefault();
+
 
             commandEntities[typeof(SelectAreaCommand)] = new Dictionary<string, object>
             {
                 ["firstPoint"] = firstPoint,
                 ["secondPoint"] = secondPoint
             };
+
+            ExecuteIfPossible(typeof(SelectAreaCommand));
         }
 
 
