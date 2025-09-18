@@ -1,7 +1,8 @@
 ﻿// Logging/DebugPaneLogger.cs
+using ExcelAddInTest.Infrastructure.Logger;
 using System;
 
-namespace ExcelAddInTest.Logging
+namespace ExcelAddInTest.Infrastructure.Logger
 {
     public sealed class DebugPaneLogger : ILogger
     {
@@ -24,5 +25,10 @@ namespace ExcelAddInTest.Logging
         public void Error(string message, Exception ex = null)
             => Write(Stamp("[ERROR]", ex == null ? message : $"{message}\r\n{ex}"));
         public void Raw(string message) => Write(message);
+
+        public void Dispose()
+        {
+            /* no-op for pane */
+        }
     }
 }

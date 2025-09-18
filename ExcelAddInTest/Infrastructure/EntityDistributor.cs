@@ -1,7 +1,8 @@
 ﻿using ExcelAddInTest.ExcelApi;
 using ExcelAddInTest.ExcelApi.Commands;
 using ExcelAddInTest.ExcelApi.Commands.Enums;
-using ExcelAddInTest.Logging;
+using ExcelAddInTest.Infrastructure.Logger;
+using ExcelAddInTest.Infrastructure.Text;
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Nlu.NluModels;
 using Microsoft.CognitiveServices.Speech;
@@ -106,6 +107,7 @@ namespace ExcelAddInTest
             bool destinationbool = false;
             bool destinationConnector = false;
             bool rangeConnector = false;
+            int rangeConnectorCount = 0;
             bool listConnector = false;
 
             foreach (var entity in entities)
@@ -113,7 +115,7 @@ namespace ExcelAddInTest
                 switch (entity.Category)
                 {
                     case "Cell": cell_list.Add(entity.Text); break;
-                    case "RangeConnector": rangeConnector = true; break;
+                    case "RangeConnector": { rangeConnector = true; rangeConnectorCount++; break; }
                     case "ListConnector": listConnector = true; break;
                     case "Destination": { destination.Add(entity.Text); destinationbool = true; break; }
                     case "DestinationConnector": destinationConnector = true; break;
@@ -132,6 +134,7 @@ namespace ExcelAddInTest
                 ["destination"] = destination,
                 ["listconnector"] = listConnector,
                 ["rangeconnector"] = rangeConnector,
+                ["rangeconnectorcount"] = rangeConnectorCount,
                 ["destinationconnector"] = destinationConnector
             };
             ExecuteIfPossible(typeof(AddCells));
@@ -145,22 +148,31 @@ namespace ExcelAddInTest
 
             if (t == typeof(AddCells))
             {
-                AddCellsMode mode = AddCellsMode.None;
+                AddCellsMode mode = AddCellsMode.List;
                 var cells = d.Get<List<string>>("cells");
                 string dest = d.Get<List<string>>("destination").FirstOrDefault();
                 var listConnector = d.GetBool("listconnector");
                 var rangeConnector = d.GetBool("rangeconnector");
                 var destConnector = d.GetBool("destinationconnector");
+                var rangeConnectorCount = d.Get<int>("rangeconnectorcount");
 
+                var parsedCells = new List<string>();
+                foreach (var c in cells)
+                {
+                    foreach(var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
+                        parsedCells.Add(parsedCell);
+                }
+
+                //redundant dar eh...
                 if (listConnector is true)
                     mode = AddCellsMode.List;
-                else if (rangeConnector is true)
+                else if (rangeConnectorCount > 2 || rangeConnector && !destConnector )
                     mode = AddCellsMode.Range;
 
                     _log.Raw($"AddCells command will execute the {mode} version");
                 if (string.IsNullOrEmpty(dest))
                     dest = null;
-                var cmd = new AddCells(cells, dest, mode);
+                var cmd = new AddCells(parsedCells, dest, mode);
 
                 if (cmd != null)
                     _executor.Execute(cmd);

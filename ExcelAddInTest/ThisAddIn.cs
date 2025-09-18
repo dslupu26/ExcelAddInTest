@@ -3,12 +3,13 @@ using System;
 using System.Threading;
 using System.Windows.Forms;
 using Office = Microsoft.Office.Core;
-using ExcelAddInTest.Logging;
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.ExcelApi;
 using ExcelAddInTest.UserInterface;
 using Microsoft.Office.Tools;
 using ExcelAddInTest.Speech;
+using ExcelAddInTest.Infrastructure.Logger;
+using System.IO;
 
 namespace ExcelAddInTest
 {
@@ -25,6 +26,7 @@ namespace ExcelAddInTest
 
         private DebugPane _debugControl;     // the UserControl instance already on your task pane
         private ILogger _log;
+        private ILogger _fileLogger;
 
         private Microsoft.Office.Tools.CustomTaskPane _pane;
         private UserInterface.UserControlPane control;
@@ -54,8 +56,17 @@ namespace ExcelAddInTest
             
             EnsureDebugPane(); //initializam panoul de debug
             EnsureSettingsPane(); //initializam panoul de setari
-            
-            _log = new DebugPaneLogger(_debugControl);
+
+            //creating the logger
+            var pathToDailyLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder
+                .LocalApplicationData),"ExcelAddInTest","Logs");
+            Directory.CreateDirectory(pathToDailyLog);
+            pathToDailyLog = System.IO.Path.Combine(pathToDailyLog, $"log--{DateTime.Now:yyyy-MM-dd}.txt");
+            var paneLogger = new DebugPaneLogger(_debugControl);
+            _fileLogger = new FileLogger(pathToDailyLog);
+            _log = new MultiLogger(paneLogger, _fileLogger);
+
+            //injecting application into the excel facade
             _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
             
             InitializeServices(); // initalizam speech service si clu service
@@ -163,6 +174,7 @@ namespace ExcelAddInTest
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
+            _fileLogger.Info($"\n--- Logger finished: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} ---");
         }
     }
 }
