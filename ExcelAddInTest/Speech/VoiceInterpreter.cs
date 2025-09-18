@@ -17,6 +17,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Animation;
+using ExcelAddInTest.Infrastructure.Text;
 
 public class VoiceInterpreter
 {
@@ -267,7 +268,8 @@ public class VoiceInterpreter
         // first if statement "?": returns null or pick.Text if it's not null
         // second if statement "??": if the first is null, returns e.Result.Text
         //pick?.Text ?? e.Text
-        var bestText = ExcelCellRx(pick?.Text ?? e.Text);
+        var bestText = TextNormalizer.Normalize(bestText);  // <— apply lexicon/pipeline here
+        bestText = ExcelCellRx(pick?.Text ?? e.Text)
         return bestText;
     }
 
