@@ -268,8 +268,8 @@ public class VoiceInterpreter
         // first if statement "?": returns null or pick.Text if it's not null
         // second if statement "??": if the first is null, returns e.Result.Text
         //pick?.Text ?? e.Text
-        var bestText = TextNormalizer.Normalize(bestText);  // <— apply lexicon/pipeline here
-        bestText = ExcelCellRx(pick?.Text ?? e.Text)
+        var bestText = TextNormalizer.Normalize(pick?.Text ?? e.Text);  // <— apply lexicon/pipeline here
+        bestText = ExcelCellRx(bestText);
         return bestText;
     }
 
