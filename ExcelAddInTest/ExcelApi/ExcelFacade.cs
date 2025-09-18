@@ -10,6 +10,7 @@ namespace ExcelAddInTest.ExcelApi
     public sealed class ExcelFacade : IExcelActions
     {
         private readonly Excel.Application _app;
+        private Excel.Worksheet ws;
         private readonly Microsoft.Office.Tools.CustomTaskPane _pane;
         private readonly SynchronizationContext _ctx;
 
@@ -18,8 +19,13 @@ namespace ExcelAddInTest.ExcelApi
             _app = app ?? throw new ArgumentNullException(nameof(app));
             _pane = pane ?? throw new ArgumentNullException(nameof(pane));
             _ctx = ctx ?? SynchronizationContext.Current;
+            ws = _app.ActiveSheet;
         }
 
+        public void SetSheet()
+        {
+            ws = _app.ActiveSheet;
+        }
         // this returns nothing
         // therefore it's only good when you don't want to get back *something*
         // kept it here because I don't know if the code explodes without it
@@ -40,6 +46,7 @@ namespace ExcelAddInTest.ExcelApi
 
         private T OnUi<T>(Func<T> action)
         {
+            SetSheet();
             if (SynchronizationContext.Current == _ctx)
                 return action();
 
@@ -61,11 +68,11 @@ namespace ExcelAddInTest.ExcelApi
         }
 
         public void SelectRange(string fp, string sp) => OnUi(() => 
-            _app.Range[fp, sp].Select()
+            ws.Range[fp, sp].Select()
         );
 
         public void WriteFormula(string address, string formula) => OnUi(() => 
-            _app.Range[address].Formula = formula
+            ws.Range[address].Formula = formula
         );
 
         public Excel.Range GetCurrentSelection() => OnUi(() => 
@@ -73,7 +80,11 @@ namespace ExcelAddInTest.ExcelApi
         );
 
         public Excel.Range GetCell(string addr) => OnUi(() =>
-            _app.Range[addr]
+            ws.Range[addr]
         );
+
+        public Excel.Range GetRange(string fp, string sp) => OnUi(() => ws.Range[fp, sp]);
+
+        public double AddCells(Excel.Range rs) => OnUi(() => _app.WorksheetFunction.Sum(rs));
     }
 }

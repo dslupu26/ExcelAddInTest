@@ -88,5 +88,10 @@ namespace ExcelAddInTest.UserInterface
                 return;
             };
         }
+
+        private void Input_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -85,6 +85,7 @@ namespace ExcelAddInTest
             // engine stops after ~3s silence via EndSilenceTimeoutMs=3000; keep a 30s safety cap
             _opts.AutoStopAfter = TimeSpan.FromSeconds(30);
             _opts.MaxDuration = TimeSpan.FromSeconds(30);
+            _opts.EndSilenceTimeoutMs = 5000;
             tbSeconds.Enabled = false;
 
             OptionsChanged?.Invoke(_opts);
