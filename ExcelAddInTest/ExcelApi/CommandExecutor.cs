@@ -1,5 +1,5 @@
 ﻿using ExcelAddInTest.ExcelApi.Commands;
-using ExcelAddInTest.Logging;
+using ExcelAddInTest.Infrastructure.Logger;
 using System;
 using System.Collections.Generic;
 using System.Data;
