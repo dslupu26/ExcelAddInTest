@@ -307,6 +307,8 @@
     <Compile Include="Infrastructure\Logger\DebugPaneLogger.cs" />
     <Compile Include="Infrastructure\Logger\ILogger.cs" />
     <Compile Include="Infrastructure\Logger\PrefixedLogger.cs" />
+    <Compile Include="Infrastructure\Text\SpeechLexicon.cs" />
+    <Compile Include="Infrastructure\Text\TextNormalizer.cs" />
     <Compile Include="Nlu\IIntentRouter.cs" />
     <Compile Include="Nlu\INlu.cs" />
     <Compile Include="Nlu\CluService.cs" />
