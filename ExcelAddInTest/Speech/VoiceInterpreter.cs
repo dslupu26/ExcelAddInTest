@@ -2,7 +2,7 @@
 using ExcelAddInTest.ExcelApi;
 using ExcelAddInTest.ExcelApi.Commands;
 
-using ExcelAddInTest.Logging;
+using ExcelAddInTest.Infrastructure.Logger;
 
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Utils;
@@ -231,12 +231,7 @@ public class VoiceInterpreter
         };
     }
 
-    private string ExcelCellRx(string text)
-    {
-        Regex Rx = new Regex(@"[A-Z]{1,3}[0-9]{1,3}");
-        text = Rx.Replace(text, m => m.Value + " ");
-        return text;
-    }
+    
     
     private string NormalizeForExcel(SpeechRecognitionResult e)
     {
@@ -269,7 +264,6 @@ public class VoiceInterpreter
         // second if statement "??": if the first is null, returns e.Result.Text
         //pick?.Text ?? e.Text
         var bestText = TextNormalizer.Normalize(pick?.Text ?? e.Text);  // <— apply lexicon/pipeline here
-        bestText = ExcelCellRx(bestText);
         return bestText;
     }
 

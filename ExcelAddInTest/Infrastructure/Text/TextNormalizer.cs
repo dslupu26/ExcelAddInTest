@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -39,6 +41,8 @@ namespace ExcelAddInTest.Infrastructure.Text
             text = ReplaceNumberWordsAfterLetters(text);
             // 5) Uppercase column letters in any cell-like token that slipped through
             text = UppercaseCellColumns(text);
+            // 6) we ball
+            text = ExcelCellRx(text);
 
             return text;
         }
@@ -119,6 +123,34 @@ namespace ExcelAddInTest.Infrastructure.Text
                 var row = token.Substring(i);
                 return col + row;
             });
+        }
+        /// <summary>
+        /// Add a space in between an enumeration of excel cells.
+        /// (Ensure there's a space after each cell reference so CLU can parse them as separate entities.)
+        /// e.g. "A1B2" -> "A1 B2"
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private static string ExcelCellRx(string text)
+        {
+            Regex Rx = new Regex(@"[A-Z]{1,3}[0-9]{1,3}");
+            text = Rx.Replace(text, m => m.Value + " ");
+            //sterpelita de la david din TextNormalizer.cs 
+            //text = Rx.Replace(text, " ");*/
+            return text;
+        }
+
+        public static IList<string> ExcelCellRegexParser(string text) 
+        {
+            IList<string> list = new List<string>();
+            Regex Rx = new Regex(@"[A-Z]{1,3}[0-9]{1,3}");
+            var result = Rx.Matches(text);
+            StringBuilder sb = new StringBuilder();
+            foreach (var match in result)
+            {
+                list.Add(match.ToString());
+            }
+            return list;
         }
     }
 }

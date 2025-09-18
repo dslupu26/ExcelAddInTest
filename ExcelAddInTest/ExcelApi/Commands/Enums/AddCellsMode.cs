@@ -8,8 +8,7 @@ namespace ExcelAddInTest.ExcelApi.Commands.Enums
 {
     public enum AddCellsMode
     {
-        None,
         Range,
-        List
+        List,
     }
 }

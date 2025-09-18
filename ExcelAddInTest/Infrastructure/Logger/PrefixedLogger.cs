@@ -1,7 +1,7 @@
 ﻿// Logging/PrefixedLogger.cs
 using System;
 
-namespace ExcelAddInTest.Logging
+namespace ExcelAddInTest.Infrastructure.Logger
 {
     public sealed class PrefixedLogger : ILogger
     {
@@ -18,5 +18,7 @@ namespace ExcelAddInTest.Logging
         public void Warn(string m) => _inner.Warn(_prefix + m);
         public void Error(string m, Exception ex = null) => _inner.Error(_prefix + m, ex);
         public void Raw(string m) => _inner.Raw(m); // RAW stays raw (often JSON)
+
+        public void Dispose() {/* no-op; inner owned elsewhere */ }
     }
 }
