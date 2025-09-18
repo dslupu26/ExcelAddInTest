@@ -234,7 +234,11 @@ public class VoiceInterpreter
     private string ExcelCellRx(string text)
     {
         Regex Rx = new Regex(@"[A-Z]{1,3}[0-9]{1,3}");
+        Regex RxSpaces = new Regex(@"\s{2,}", RegexOptions.Compiled);
+
+        //sterpelita de la david din TextNormalizer.cs 
         text = Rx.Replace(text, m => m.Value + " ");
+        text = Rx.Replace(text, " ");
         return text;
     }
     
@@ -268,8 +272,8 @@ public class VoiceInterpreter
         // first if statement "?": returns null or pick.Text if it's not null
         // second if statement "??": if the first is null, returns e.Result.Text
         //pick?.Text ?? e.Text
-        var bestText = TextNormalizer.Normalize(bestText);  // <— apply lexicon/pipeline here
-        bestText = ExcelCellRx(pick?.Text ?? e.Text)
+        var bestText = TextNormalizer.Normalize(pick?.Text ?? e.Text);  // <— apply lexicon/pipeline here
+        bestText = ExcelCellRx(bestText);
         return bestText;
     }
 
