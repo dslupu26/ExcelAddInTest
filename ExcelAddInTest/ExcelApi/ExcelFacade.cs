@@ -1,4 +1,5 @@
 ﻿using Microsoft.CognitiveServices.Speech.Dialog;
+using Microsoft.Office.Interop.Excel;
 using System;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -31,20 +32,6 @@ namespace ExcelAddInTest.ExcelApi
         // therefore it's only good when you don't want to get back *something*
         // kept it here because I don't know if the code explodes without it
 
-        private void OnUi(Action action)
-        {
-            if (SynchronizationContext.Current == _ctx) {
-                action();
-                return;
-            }
-
-            // this runs action() on the UI thread
-            // ignores whatever object _ is
-            // calls action()
-            // and null because we don't need about the object
-            _ctx.Send(_ => action(), null);
-        }
-
         private T OnUi<T>(Func<T> action)
         {
             SetSheet();
@@ -68,9 +55,12 @@ namespace ExcelAddInTest.ExcelApi
             OnUi(() => _pane.Visible = !_pane.Visible);
         }
 
-        public void SelectRange(string fp, string sp) => OnUi(() => 
-            ws.Range[fp, sp].Select()
-        );
+        public void SelectRange(string firstA1, string secondA1)
+        {
+            var app = _app; // Excel.Application
+            var rng = app.Range[firstA1, secondA1]; // Excel will handle reversed corners fine
+            rng.Select();
+        }
 
         public void WriteFormula(string address, string formula) => OnUi(() => 
             ws.Range[address].Formula = formula
