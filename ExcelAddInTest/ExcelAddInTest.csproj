@@ -299,6 +299,7 @@
     <Compile Include="ExcelApi\CommandExecutor.cs" />
     <Compile Include="ExcelApi\Commands\Enums\AddCellsMode.cs" />
     <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
+    <Compile Include="ExcelApi\Commands\WriteInCellCommand.cs" />
     <Compile Include="ExcelApi\ExcelFacade.cs" />
     <Compile Include="ExcelApi\ICommandExecutor.cs" />
     <Compile Include="ExcelApi\IExcelActions.cs" />

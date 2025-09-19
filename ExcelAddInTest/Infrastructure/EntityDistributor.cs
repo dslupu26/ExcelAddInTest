@@ -30,6 +30,8 @@ namespace ExcelAddInTest
     public class EntityDistributor
     {
         private readonly CluService _clu;
+        private static readonly Regex CellRx = new Regex(@"\b[A-Z]{1,3}\d{1,7}\b", RegexOptions.Compiled); // Regex idiot for WriteInCell
+        // Probably should change it later
 
         private Dictionary<Type, Dictionary<string, object>> commandEntities;
         private Dictionary<string, Action<IReadOnlyList<NluEntity>>> intentHandler;
@@ -37,6 +39,7 @@ namespace ExcelAddInTest
         private List<string> cellAddresses;
         private string cellDestination;
         private string intent;
+        private string _lastUtterance;
 
         private ICommandExecutor _executor;
         private ILogger _log;
@@ -51,7 +54,10 @@ namespace ExcelAddInTest
             intentHandler = new Dictionary<string, Action<IReadOnlyList<NluEntity>>>
             {
                 ["AddCells"] = HAddCells,
-                ["SelectArea"] = HSelectArea
+                ["SelectArea"] = HSelectArea,
+                ["WriteInCell"] = HWriteInCell,   // <— NEW
+                ["Write"] = HWriteInCell,   // (optional alias)
+                ["Type"] = HWriteInCell    // (optional alias)
             };
 
         }
@@ -61,6 +67,8 @@ namespace ExcelAddInTest
             var text = result.Trim();
             if (string.IsNullOrEmpty(text))
                 return;
+
+            _lastUtterance = text;  // <— remember full normalized sentence
 
             try
             {
@@ -140,6 +148,48 @@ namespace ExcelAddInTest
             ExecuteIfPossible(typeof(AddCells));
         }
 
+        private void HWriteInCell(IReadOnlyList<NluEntity> entities)
+        {
+            if (string.IsNullOrWhiteSpace(_lastUtterance))
+                return;
+
+            // 1) Target cell: prefer CLU entity, else regex
+            string cell = entities?
+                .FirstOrDefault(e => string.Equals(e.Category, "Cell", StringComparison.OrdinalIgnoreCase))
+                ?.Text;
+
+            if (string.IsNullOrWhiteSpace(cell))
+            {
+                var m = CellRx.Match(_lastUtterance);
+                if (!m.Success) { _log.Warn("WriteInCell: no cell found."); return; }
+                cell = m.Value.ToUpperInvariant();
+            }
+
+            // 2) Everything AFTER the cell becomes the text to write
+            var cellOccur = Regex.Match(_lastUtterance, @"\b" + Regex.Escape(cell) + @"\b", RegexOptions.IgnoreCase);
+            if (!cellOccur.Success) { _log.Warn("WriteInCell: cell not located in utterance."); return; }
+
+            var tail = _lastUtterance.Substring(cellOccur.Index + cellOccur.Length).Trim();
+
+            // Remove common fillers immediately after the cell: "in", "to", "with", ":" etc.
+            tail = Regex.Replace(tail, @"^(in|to|into|with|as|,|:|\-)\s+", "", RegexOptions.IgnoreCase);
+
+            // If quoted, keep inside quotes only
+            var q = Regex.Match(tail, "^\"([^\"]*)\"|'([^']*)'");
+            var textToWrite = q.Success
+                ? (q.Groups[1].Success ? q.Groups[1].Value : q.Groups[2].Value)
+                : tail;
+
+            // 3) Stash → ExecuteIfPossible
+            commandEntities[typeof(WriteInCellCommand)] = new Dictionary<string, object>
+            {
+                ["cell"] = cell,
+                ["text"] = textToWrite ?? string.Empty
+            };
+
+            ExecuteIfPossible(typeof(WriteInCellCommand));
+        }
+
         private void ExecuteIfPossible(Type t)
         { 
             Dictionary<string,object> d;
@@ -187,6 +237,20 @@ namespace ExcelAddInTest
 
                 if (cmd != null)
                     _executor.Execute(cmd);
+            }
+
+            if (t == typeof(WriteInCellCommand))
+            {
+                var cell = d.Get<string>("cell");
+                var text = d.Get<string>("text");
+                if (string.IsNullOrWhiteSpace(cell))
+                {
+                    _log.Warn("WriteInCell: missing cell.");
+                    return;
+                }
+
+                var cmd = new WriteInCellCommand(cell, text ?? string.Empty);
+                _executor.Execute(cmd);
             }
         }
 

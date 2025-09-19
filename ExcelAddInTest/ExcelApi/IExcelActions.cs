@@ -18,6 +18,7 @@ namespace ExcelAddInTest.ExcelApi
         Excel.Range GetCurrentSelection();
         Excel.Range GetCell(string addr);
         void SelectRange(string fp, string sp);
+        void WriteInCellCommand(string cell, string text);
         Excel.Range GetRange(string fp, string sp);
         double AddCells(Excel.Range rs);
 

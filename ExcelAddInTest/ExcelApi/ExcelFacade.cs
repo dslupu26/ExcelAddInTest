@@ -1,6 +1,7 @@
 ﻿using Microsoft.CognitiveServices.Speech.Dialog;
 using Microsoft.Office.Interop.Excel;
 using System;
+using System.Globalization;
 using System.Threading;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -50,6 +51,14 @@ namespace ExcelAddInTest.ExcelApi
             return result;
         }
 
+        // add this overload next to your existing OnUi<T>
+        private void OnUi(System.Action action)
+        {
+            SetSheet();
+            if (SynchronizationContext.Current == _ctx) action();
+            else _ctx.Send(_ => action(), null);
+        }
+
         public void ToggleMainPane()
         {
             OnUi(() => _pane.Visible = !_pane.Visible);
@@ -60,6 +69,32 @@ namespace ExcelAddInTest.ExcelApi
             var app = _app; // Excel.Application
             var rng = app.Range[firstA1, secondA1]; // Excel will handle reversed corners fine
             rng.Select();
+        }
+
+        public void WriteInCellCommand(string cell, string text)
+        {
+            if (string.IsNullOrWhiteSpace(cell))
+                throw new ArgumentNullException(nameof(cell));
+
+            OnUi(() =>
+            {
+                var rng = ws.Range[cell];
+
+                var s = text?.Trim() ?? string.Empty;
+
+                // write as formula if starts with '='
+                if (s.StartsWith("=", StringComparison.Ordinal))
+                {
+                    rng.Formula = s;
+                    return;
+                }
+
+                // try numeric (InvariantCulture) else write as text
+                if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var d))
+                    rng.Value2 = d;
+                else
+                    rng.Value2 = s;
+            });
         }
 
         public void WriteFormula(string address, string formula) => OnUi(() => 
