@@ -19,7 +19,7 @@ namespace ExcelAddInTest.ExcelApi.Commands
 
         public void Execute(IExcelActions excel)
         {
-            excel.WriteInCell(_cell, _text);
+            excel.WriteInCellCommand(_cell, _text);
         }
     }
 }
