@@ -1,6 +1,9 @@
 ﻿using ExcelAddInTest.ExcelApi.Commands;
+using ExcelAddInTest.ExcelApi.Commands.Enums;
 using ExcelAddInTest.Infrastructure.Logger;
+using ExcelAddInTest.Infrastructure.Text;
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -17,11 +20,21 @@ namespace ExcelAddInTest.ExcelApi
     /// Executes commands available in the IExcelActions interface through IExcelCommand interface.
     /// </summary>
 
+    public static class DictExt
+    {
+
+        public static T Get<T>(this Dictionary<string, object> d, string key)
+            => d.TryGetValue(key, out var o) && o is T t ? t : default;
+
+        public static bool GetBool(this Dictionary<string, object> d, string key)
+           => d.TryGetValue(key, out var o) && o is bool b && b;
+    }
+
     public class CommandExecutor : ICommandExecutor
     {
         private IExcelActions _excel;
         private ILogger _log;
-
+        private IExcelCommand cmd = null;
         public CommandExecutor(IExcelActions excel, ILogger log)
         {
             _excel = excel ?? throw new ArgumentNullException(nameof(excel));

@@ -17,15 +17,7 @@ using System.Windows.Markup;
 
 namespace ExcelAddInTest
 {
-    public static class DictExt
-    {
-
-        public static T Get<T>(this Dictionary<string, object> d, string key)
-            => d.TryGetValue(key, out var o) && o is T t ? t : default;
-
-         public static bool GetBool(this Dictionary<string, object> d, string key)
-            => d.TryGetValue(key, out var o) && o is bool b && b;
-    }
+  
 
     public class EntityDistributor
     {
@@ -34,7 +26,7 @@ namespace ExcelAddInTest
         private static readonly Regex CellRx = new Regex(@"\b[A-Z]{1,3}\d{1,7}\b", RegexOptions.Compiled); // Regex idiot for WriteInCell
         // Probably should change it later
 
-        private Dictionary<Type, Dictionary<string, object>> commandEntities;
+        private Dictionary<string, object> commandData;
         private Dictionary<string, Action<IReadOnlyList<NluEntity>>> intentHandler;
 
         private List<string> cellAddresses;
@@ -50,7 +42,7 @@ namespace ExcelAddInTest
             _clu = clu;
             _executor = executor;
             _log = log;
-            commandEntities = new Dictionary<Type, Dictionary<string, object>>();
+            commandData = new Dictionary<string, object>();
 
             intentHandler = new Dictionary<string, Action<IReadOnlyList<NluEntity>>>
             {
@@ -73,6 +65,7 @@ namespace ExcelAddInTest
 
             try
             {
+                text = "Add A1 and B7 in D1"; // debug line
                 var nlu = await _clu.AnalyzeAsync(text);
                 _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
                 _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
@@ -386,13 +379,12 @@ namespace ExcelAddInTest
             secondPoint = cells.LastOrDefault();
 
 
-            commandEntities[typeof(SelectAreaCommand)] = new Dictionary<string, object>
+            commandData = new Dictionary<string, object>
             {
                 ["firstPoint"] = firstPoint,
                 ["secondPoint"] = secondPoint
             };
-
-            ExecuteIfPossible(typeof(SelectAreaCommand));
+            _executor.Execute(typeof(SelectAreaCommand), commandData);
         }
 
 
@@ -405,16 +397,18 @@ namespace ExcelAddInTest
         // this here basically goes
         // "return the correct dictionary. else ah well"
 
-        public T GetEntity<T>(Type commandType, string commandKey)
-        {
-            if (commandEntities.TryGetValue(commandType, out var dictionary))
-            {
-                if (dictionary.TryGetValue(commandKey, out var obj) && obj is T t)
-                    return t;
-            }
 
-            return default;
-        }
+        //need to review this later
+        /* public T GetEntity<T>(Type commandType, string commandKey)
+         {
+             if (commandData.TryGetValue(commandType, out var dictionary))
+             {
+                 if (dictionary.TryGetValue(commandKey, out var obj) && obj is T t)
+                     return t;
+             }
+
+             return default;
+         }*/
 
 
 
