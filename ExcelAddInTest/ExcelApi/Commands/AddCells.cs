@@ -1,123 +1,84 @@
-﻿using ExcelAddInTest.ExcelApi.Commands.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Windows.Documents;
-using System.Windows.Media;
-using Excel = Microsoft.Office.Interop.Excel;
+using System.Text;
+using ExcelAddInTest.ExcelApi.Commands.Enums;
 
 namespace ExcelAddInTest.ExcelApi.Commands
 {
-    public class AddCells : IExcelCommand
+    /// <summary>
+    /// Builds a SUM(...) formula and writes it to the destination cell:
+    ///  - List mode:  =SUM(A1,A5,B1)
+    ///  - Range mode: =SUM(A1:B5)
+    /// </summary>
+    public sealed class AddCells : IExcelCommand
     {
-        private readonly List<string> _addresses;
-        private string _destination;
-        private EntityDistributor _entityDistrib;
-        private AddCellsMode _mode;
-        private bool _isDestinationInAddresses = false;
+        private readonly List<string> _addresses;   // normalized A1s (upper-case)
+        private readonly string _destination;       // where to write the formula (must be set)
+        private readonly AddCellsMode _mode;
+
         public AddCells(List<string> addresses, string destination, AddCellsMode mode)
         {
             _addresses = addresses ?? throw new ArgumentNullException(nameof(addresses));
-            _destination = destination; // its fine if its null i guess. it just adds and doesnt put it anywhere ig even if its stupid
+            _destination = string.IsNullOrWhiteSpace(destination) ? null : destination.Trim().ToUpperInvariant();
             _mode = mode;
         }
-        /// <summary>
-        /// Executes a command to add cells based on the specified mode (present in <see cref="AddCellsMode"/>).
-        /// </summary>
-        /// <param name="excel"></param>
+
         public void Execute(IExcelActions excel)
         {
-            if (_destination == null)
-            {
-                _destination = _addresses.LastOrDefault();
-                _isDestinationInAddresses = true;
-            }
-            if (_mode == AddCellsMode.Range)
-                AddCellsInRange(excel);
-            else if (_mode == AddCellsMode.List)
-                AddCellsInList(excel);
-            else
-                Console.WriteLine("<< add cells command >> unknown type");
-        }
-        /// <summary>
-        /// Adds cells in a rectangular range.
-        /// If the destination cell is not in the range, it adds its value to the sum as well.
-        /// </summary>
-        /// <param name="excel"></param>
-        private void AddCellsInRange(IExcelActions excel) 
-        {
-           
-            double sum = 0;
-                try
-                {
-                    var last = _addresses.LastOrDefault();
-                    var secondLast = _addresses.Count() > 2 ? _addresses[_addresses.Count() - 2] : null;
-                    var end = (!_isDestinationInAddresses && secondLast != null) ? secondLast : last;
-                    Excel.Range rs = excel.GetRange(_addresses.First(), end);
-                    sum = excel.AddCells(rs);
-                    if (excel.IsCellInRange(_destination, _addresses.First(), end) == false)
-                        sum = sum + double.Parse(excel.GetCell(_addresses.Last()).Value2.ToString(), CultureInfo.InvariantCulture);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"<< add cells command >> cell reading failed |||: {ex.Message}");
-                }   
+            if (excel == null) throw new ArgumentNullException(nameof(excel));
+            if (string.IsNullOrWhiteSpace(_destination))
+                throw new CommandExecutionException("AddCells needs a destination cell (e.g., '… in B2').");
 
-            if (string.IsNullOrEmpty(_destination) == false)
+            switch (_mode)
             {
-                try
-                {
-                    Excel.Range destinationCell = excel.GetCell(_destination);
-                    if (destinationCell != null)
-                        destinationCell.Value2 = sum;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"<< add cells command >> could not write to destionation ||| {ex.Message}");
-                }
+                case AddCellsMode.Range:
+                    WriteRangeFormula(excel);
+                    break;
+
+                case AddCellsMode.List:
+                default:
+                    WriteListFormula(excel);
+                    break;
             }
         }
-        /// <summary>
-        /// Adds cells individually from a list of addresses.
-        /// The destination cell is included in the sum.
-        /// </summary>
-        /// <param name="excel"></param>
-        private void AddCellsInList(IExcelActions excel)
+
+        private void WriteRangeFormula(IExcelActions excel)
         {
-            double sum = 0;
+            if (_addresses.Count < 2)
+                throw new CommandExecutionException("Range mode requires two cells (e.g., 'from A1 to B5').");
 
-            foreach (var address in _addresses)
-            {
-                try
-                {
-                    double value = 0;
-                    Excel.Range cell = excel.GetCell(address);
-                    if (double.TryParse(cell.Value2?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out value))
-                    {
-                        sum += value;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"<< add cells command >> cell reading failed ||| {address}: {ex.Message}");
-                }
-            }
+            var from = _addresses[0];
+            var to = _addresses[1];
 
-            if (string.IsNullOrEmpty(_destination) == false)
-            {
-                try
-                {
-                    Excel.Range destinationCell = excel.GetCell(_destination);
-                    if (destinationCell != null)
-                        destinationCell.Value2 = sum;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"<< add cells command >> could not write to destionation ||| {ex.Message}");
-                }
-            }
+            // Avoid circular refs: destination must not be inside the range
+            if (excel.IsCellInRange(_destination, from, to))
+                throw new CommandExecutionException(
+                    $"Destination '{_destination}' cannot be inside the summed range {from}:{to}."
+                );
+
+            var formula = $"=SUM({from}:{to})";
+            excel.WriteFormula(_destination, formula);
+        }
+
+        private void WriteListFormula(IExcelActions excel)
+        {
+            // Exclude destination from the list to avoid circular references
+            var items = _addresses
+                .Where(a => !string.Equals(a, _destination, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (items.Count == 0)
+                throw new CommandExecutionException("No source cells to sum (list was empty or only contained the destination).");
+
+            // De-duplicate while preserving order (case-insensitive)
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var unique = new List<string>();
+            foreach (var a in items)
+                if (seen.Add(a)) unique.Add(a);
+
+            var formula = "=SUM(" + string.Join(",", unique) + ")";
+            excel.WriteFormula(_destination, formula);
         }
     }
 }
