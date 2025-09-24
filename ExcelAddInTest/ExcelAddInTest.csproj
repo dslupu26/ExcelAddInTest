@@ -297,6 +297,7 @@
     <Compile Include="ExcelApi\CommandExecutionException.cs" />
     <Compile Include="ExcelApi\Commands\AddCells.cs" />
     <Compile Include="ExcelApi\CommandExecutor.cs" />
+    <Compile Include="ExcelApi\Commands\AddIntoCellCommand.cs" />
     <Compile Include="ExcelApi\Commands\Enums\AddCellsMode.cs" />
     <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
     <Compile Include="ExcelApi\Commands\WriteInCellCommand.cs" />

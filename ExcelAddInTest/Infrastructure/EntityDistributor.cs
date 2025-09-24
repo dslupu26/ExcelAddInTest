@@ -125,13 +125,11 @@ namespace ExcelAddInTest
             var cell_list = new List<string>();
             var destination = new List<string>();
 
-            bool destinationbool = false;
             bool destinationConnector = false;
             bool rangeConnector = false;
             int rangeConnectorCount = 0;
             bool listConnector = false;
 
-            // collect entities
             foreach (var entity in entities)
             {
                 switch (entity.Category)
@@ -151,26 +149,45 @@ namespace ExcelAddInTest
 
                     case "Destination":
                         destination.Add(entity.Text);
-                        destinationbool = true;
                         break;
 
                     case "DestinationConnector":
                         destinationConnector = true;
                         break;
-
-                    case null:
-                        break;
                 }
             }
 
-            // Infer destination when user said "… in C1" but CLU tagged C1 as a Cell
-            if (destination.Count == 0 && destinationConnector && cell_list.Count > 0)
+            // Heuristics based on the actual words the user spoke:
+            var utter = _lastUtterance ?? string.Empty;
+            var hasInWord = Regex.IsMatch(utter, @"\b(in|into)\b", RegexOptions.IgnoreCase);
+            var hasToWord = Regex.IsMatch(utter, @"\bto\b", RegexOptions.IgnoreCase);
+
+            // ---- Case 1: "Add A1 to B1" (no "in/into") => in-place add (no formula) ----
+            if (!hasInWord && hasToWord && cell_list.Count >= 2)
+            {
+                var dest = cell_list[cell_list.Count - 1];
+                var sources = cell_list.GetRange(0, cell_list.Count - 1);
+
+                lock (_gate)
+                {
+                    commandEntities[typeof(AddIntoCellCommand)] = new Dictionary<string, object>
+                    {
+                        ["sources"] = sources,
+                        ["dest"] = dest
+                    };
+                }
+                ExecuteIfPossible(typeof(AddIntoCellCommand));
+                return;
+            }
+
+            // ---- Case 2: Formula writer ("... in C1") ----
+            // If CLU didn't tag Destination but we DO have an "in/into", infer last cell as destination.
+            if (destination.Count == 0 && hasInWord && cell_list.Count > 0)
             {
                 var inferred = cell_list.Last();
                 destination.Add(inferred);
-                _log.Info($"[AddCells] Inferred destination '{inferred}' after DestinationConnector.");
-
-                // Optional: if you want, you can remove the inferred destination from the source cells:
+                _log.Info($"[AddCells] Inferred destination '{inferred}' after 'in/into'.");
+                // optional: remove from sources
                 // cell_list.RemoveAt(cell_list.Count - 1);
             }
 
@@ -189,6 +206,8 @@ namespace ExcelAddInTest
 
             ExecuteIfPossible(typeof(AddCells));
         }
+
+
 
 
         private void HWriteInCell(IReadOnlyList<NluEntity> entities)
@@ -301,6 +320,28 @@ namespace ExcelAddInTest
                     {
                         _log.Error("[SelectArea] Command build failed.", ex);
                     }
+                }
+                else if (t == typeof(AddIntoCellCommand))
+                {
+                    var sources = d.Get<List<string>>("sources") ?? new List<string>();
+                    var dest = d.Get<string>("dest");
+
+                    if (string.IsNullOrWhiteSpace(dest) || sources.Count == 0)
+                    {
+                        _log.Warn("[AddInto] Missing destination or sources.");
+                        return;
+                    }
+
+                    try
+                    {
+                        var cmd = new AddIntoCellCommand(sources, dest);
+                        _executor.Execute(cmd);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("[AddInto] Command build failed.", ex);
+                    }
+                    return;
                 }
                 else if (t == typeof(WriteInCellCommand))
                 {
