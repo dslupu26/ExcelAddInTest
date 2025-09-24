@@ -6,7 +6,9 @@ using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -39,68 +41,45 @@ namespace ExcelAddInTest.ExcelApi
             _log = log;
         }
 
-        public void Execute(Type t, Dictionary<string,object> d)
+        /// <summary>Execute a command; returns true if it completed without throwing.</summary>    
+        public bool Execute(IExcelCommand cmd)
         {
-            if (t == null)
+            if (cmd == null)
             {
-                _log.Error($"CommandExecutor Error: command type is null!");
-                return;
+                _log.Error("CommandExecutor: command is null.");
+                return false;
             }
 
-            
-
-            if (t == typeof(AddCells))
-            {
-                AddCellsMode mode = AddCellsMode.List;
-                var cells = d.Get<List<string>>("cells");
-                string dest = d.Get<List<string>>("destination").FirstOrDefault();
-                var listConnector = d.GetBool("listconnector");
-                var rangeConnector = d.GetBool("rangeconnector");
-                var destConnector = d.GetBool("destinationconnector");
-                var rangeConnectorCount = d.Get<int>("rangeconnectorcount");
-
-                var parsedCells = new List<string>();
-                foreach (var c in cells)
-                {
-                    foreach (var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
-                        parsedCells.Add(parsedCell);
-                }
-
-                //redundant dar eh...
-                if (listConnector is true)
-                    mode = AddCellsMode.List;
-                else if (rangeConnectorCount > 2 || rangeConnector && destConnector)
-                    mode = AddCellsMode.Range;
-
-                _log.Raw($"AddCells command will execute the {mode} version");
-                if (string.IsNullOrEmpty(dest))
-                    dest = null;
-                cmd = new AddCells(parsedCells, dest, mode);
-                     
-            }
-
-            if (t == typeof(SelectAreaCommand))
-            {
-                var fp = d.Get<string>("firstPoint");
-                var sp = d.Get<string>("secondPoint");
-
-                cmd = new SelectAreaCommand(fp, sp);
-            }
-
+            var name = cmd.GetType().Name;
+            var sw = Stopwatch.StartNew();
             try
             {
-                if (cmd == null)
-                {
-                    _log.Error($"CommandExecutor Error: command is null!");
-                    return;
-                }
                 cmd.Execute(_excel);
+                _log.Info($"[{name}] OK in {sw.ElapsedMilliseconds} ms");
+                return true;
+            }
+            catch (CommandExecutionException ex)
+            {
+                _log.Error($"[{name}] Command execution error.", ex);
+            }
+            catch (ArgumentException ex)
+            {
+                _log.Error($"[{name}] Invalid argument(s).", ex);
+            }
+            catch (COMException ex)
+            {
+                _log.Error($"[{name}] Excel interop failed.", ex);
             }
             catch (Exception ex)
             {
-                _log.Error($"CommandExecutor Error: {ex.Message}");
-
+                _log.Error($"[{name}] Unexpected error.", ex);
             }
+            finally
+            {
+                sw.Stop();
+            }
+
+            return false;
         }
     }
 }
