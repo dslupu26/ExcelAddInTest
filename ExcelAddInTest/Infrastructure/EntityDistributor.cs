@@ -131,35 +131,65 @@ namespace ExcelAddInTest
             int rangeConnectorCount = 0;
             bool listConnector = false;
 
+            // collect entities
             foreach (var entity in entities)
             {
                 switch (entity.Category)
                 {
-                    case "Cell": cell_list.Add(entity.Text); break;
-                    case "RangeConnector": { rangeConnector = true; rangeConnectorCount++; break; }
-                    case "ListConnector": listConnector = true; break;
-                    case "Destination": { destination.Add(entity.Text); destinationbool = true; break; }
-                    case "DestinationConnector": destinationConnector = true; break;
-                    case null: break;
+                    case "Cell":
+                        cell_list.Add(entity.Text);
+                        break;
+
+                    case "RangeConnector":
+                        rangeConnector = true;
+                        rangeConnectorCount++;
+                        break;
+
+                    case "ListConnector":
+                        listConnector = true;
+                        break;
+
+                    case "Destination":
+                        destination.Add(entity.Text);
+                        destinationbool = true;
+                        break;
+
+                    case "DestinationConnector":
+                        destinationConnector = true;
+                        break;
+
+                    case null:
+                        break;
                 }
             }
 
-            //we need to think about how we want this to operate first so for now the default
-            //will be that we add everything to the destination cell, included
-            /*if (destinationbool && cell_list.Take(cell_list.Count - 1).Contains(destination.First()))
-                cell_list.RemoveAt(cell_list.Count - 1); // remove last cell if its also the destination*/
-
-            commandEntities[typeof(AddCells)] = new Dictionary<string, object>
+            // Infer destination when user said "… in C1" but CLU tagged C1 as a Cell
+            if (destination.Count == 0 && destinationConnector && cell_list.Count > 0)
             {
-                ["cells"] = cell_list,
-                ["destination"] = destination,
-                ["listconnector"] = listConnector,
-                ["rangeconnector"] = rangeConnector,
-                ["rangeconnectorcount"] = rangeConnectorCount,
-                ["destinationconnector"] = destinationConnector
-            };
+                var inferred = cell_list.Last();
+                destination.Add(inferred);
+                _log.Info($"[AddCells] Inferred destination '{inferred}' after DestinationConnector.");
+
+                // Optional: if you want, you can remove the inferred destination from the source cells:
+                // cell_list.RemoveAt(cell_list.Count - 1);
+            }
+
+            lock (_gate)
+            {
+                commandEntities[typeof(AddCells)] = new Dictionary<string, object>
+                {
+                    ["cells"] = cell_list,
+                    ["destination"] = destination,
+                    ["listconnector"] = listConnector,
+                    ["rangeconnector"] = rangeConnector,
+                    ["rangeconnectorcount"] = rangeConnectorCount,
+                    ["destinationconnector"] = destinationConnector
+                };
+            }
+
             ExecuteIfPossible(typeof(AddCells));
         }
+
 
         private void HWriteInCell(IReadOnlyList<NluEntity> entities)
         {
@@ -220,20 +250,15 @@ namespace ExcelAddInTest
             {
                 if (t == typeof(AddCells))
                 {
-                    AddCellsMode mode = AddCellsMode.List;
                     var cells = d.Get<List<string>>("cells") ?? new List<string>();
-                    string dest = d.Get<List<string>>("destination")?.FirstOrDefault();
-                    var listConnector = d.GetBool("listconnector");
-                    var rangeConnector = d.GetBool("rangeconnector");
-                    var destConnector = d.GetBool("destinationconnector");
-                    var rangeCount = d.Get<int>("rangeconnectorcount");
+                    var dest = d.Get<List<string>>("destination")?.FirstOrDefault();
+                    var hasRangeConnector = d.GetBool("rangeconnector");
 
+                    // normalize/expand (your parser)
                     var parsedCells = new List<string>();
                     foreach (var c in cells)
-                    {
-                        foreach (var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
-                            parsedCells.Add(parsedCell);
-                    }
+                        foreach (var parsed in TextNormalizer.ExcelCellRegexParser(c))
+                            parsedCells.Add(parsed);
 
                     if (parsedCells.Count == 0)
                     {
@@ -241,13 +266,21 @@ namespace ExcelAddInTest
                         return;
                     }
 
-                    if (rangeCount > 2 || (rangeConnector && !destConnector))
-                        mode = AddCellsMode.Range;
+                    // Range if we have a range connector and at least two cells; otherwise List
+                    var mode = (hasRangeConnector && parsedCells.Count >= 2)
+                        ? AddCellsMode.Range
+                        : AddCellsMode.List;
 
-                    _log.Raw($"AddCells will execute in {mode} mode");
+                    // Destination required (per your spec "... in B2/C1")
+                    if (string.IsNullOrWhiteSpace(dest))
+                    {
+                        _log.Warn("[AddCells] Missing destination cell (say for example: '… in B2').");
+                        return;
+                    }
 
-                    var cmd = new AddCells(parsedCells, string.IsNullOrEmpty(dest) ? null : dest, mode);
-                    _executor.Execute(cmd);   // executor catches runtime errors inside Execute(...)
+                    var cmd = new AddCells(parsedCells, dest, mode);
+                    _executor.Execute(cmd);
+                    return;
                 }
                 else if (t == typeof(SelectAreaCommand))
                 {
@@ -261,7 +294,7 @@ namespace ExcelAddInTest
 
                     try
                     {
-                        var cmd = new SelectAreaCommand(fp, sp); // ctor could throw -> catch below
+                        var cmd = new SelectAreaCommand(fp, sp);
                         _executor.Execute(cmd);
                     }
                     catch (Exception ex)
@@ -281,7 +314,7 @@ namespace ExcelAddInTest
 
                     try
                     {
-                        var cmd = new WriteInCellCommand(cell, text); // ctor could throw -> catch below
+                        var cmd = new WriteInCellCommand(cell, text);
                         _executor.Execute(cmd);
                     }
                     catch (Exception ex)
@@ -296,6 +329,7 @@ namespace ExcelAddInTest
                 lock (_gate) commandEntities.Remove(t);
             }
         }
+
 
         private void HSelectArea(IReadOnlyList<NluEntity> entities)
         {
