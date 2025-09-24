@@ -19,7 +19,8 @@ namespace ExcelAddInTest.ExcelApi.Commands
 
         public void Execute(IExcelActions excel)
         {
-            excel.WriteInCellCommand(_cell, _text);
+            if (excel == null) throw new ArgumentNullException(nameof(excel));
+            excel.WriteInCell(_cell, _text);   // let exceptions bubble to CommandExecutor
         }
     }
 }

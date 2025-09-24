@@ -294,6 +294,7 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="ExcelApi\CommandExecutionException.cs" />
     <Compile Include="ExcelApi\Commands\AddCells.cs" />
     <Compile Include="ExcelApi\Commands\AddSelected.cs" />
     <Compile Include="ExcelApi\CommandExecutor.cs" />

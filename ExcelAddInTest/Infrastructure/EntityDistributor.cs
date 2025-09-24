@@ -30,6 +30,7 @@ namespace ExcelAddInTest
     public class EntityDistributor
     {
         private readonly CluService _clu;
+        private readonly object _gate = new object();
         private static readonly Regex CellRx = new Regex(@"\b[A-Z]{1,3}\d{1,7}\b", RegexOptions.Compiled); // Regex idiot for WriteInCell
         // Probably should change it later
 
@@ -64,35 +65,47 @@ namespace ExcelAddInTest
 
         public async Task AnalyzeAsync(string result)
         {
-            var text = result.Trim();
+            var text = result?.Trim();
             if (string.IsNullOrEmpty(text))
                 return;
 
-            _lastUtterance = text;  // <— remember full normalized sentence
+            _lastUtterance = text;
 
             try
             {
                 var nlu = await _clu.AnalyzeAsync(text);
                 _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
                 _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
-                // nlu.Entities has the cells; lowkey no need to parse them. again.
-                foreach (var ent in nlu.Entities)
+
+                var ents = nlu.Entities ?? new List<NluEntity>();
+                foreach (var ent in ents)
                     _log.Info($" - {ent.Category}: \"{ent.Text}\"");
 
+                var top = nlu.TopIntent ?? "None";
 
-                string intent = nlu.TopIntent ?? "None";
-
-                if (intentHandler.TryGetValue(intent, out var handler))
-                    handler(nlu.Entities);
-
+                if (intentHandler.TryGetValue(top, out var handler))
+                {
+                    try
+                    {
+                        handler(nlu.Entities ?? new List<NluEntity>());
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error($"Intent handler '{top}' failed.", ex);
+                    }
+                }
+                else
+                {
+                    _log.Warn($"No handler registered for intent '{top}'.");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("something important exploded - entity distributor");
+                _log.Error("AnalyzeAsync failed.", ex);   // replace Console.WriteLine
             }
         }
 
-        
+
 
 
 
@@ -150,107 +163,137 @@ namespace ExcelAddInTest
 
         private void HWriteInCell(IReadOnlyList<NluEntity> entities)
         {
-            if (string.IsNullOrWhiteSpace(_lastUtterance))
-                return;
-
-            // 1) Target cell: prefer CLU entity, else regex
-            string cell = entities?
-                .FirstOrDefault(e => string.Equals(e.Category, "Cell", StringComparison.OrdinalIgnoreCase))
-                ?.Text;
-
-            if (string.IsNullOrWhiteSpace(cell))
+            try
             {
-                var m = CellRx.Match(_lastUtterance);
-                if (!m.Success) { _log.Warn("WriteInCell: no cell found."); return; }
-                cell = m.Value.ToUpperInvariant();
-            }
+                if (string.IsNullOrWhiteSpace(_lastUtterance))
+                    return;
 
-            // 2) Everything AFTER the cell becomes the text to write
-            var cellOccur = Regex.Match(_lastUtterance, @"\b" + Regex.Escape(cell) + @"\b", RegexOptions.IgnoreCase);
-            if (!cellOccur.Success) { _log.Warn("WriteInCell: cell not located in utterance."); return; }
+                string cell = entities?
+                    .FirstOrDefault(e => string.Equals(e.Category, "Cell", StringComparison.OrdinalIgnoreCase))
+                    ?.Text;
 
-            var tail = _lastUtterance.Substring(cellOccur.Index + cellOccur.Length).Trim();
-
-            // Remove common fillers immediately after the cell: "in", "to", "with", ":" etc.
-            tail = Regex.Replace(tail, @"^(in|to|into|with|as|,|:|\-)\s+", "", RegexOptions.IgnoreCase);
-
-            // If quoted, keep inside quotes only
-            var q = Regex.Match(tail, "^\"([^\"]*)\"|'([^']*)'");
-            var textToWrite = q.Success
-                ? (q.Groups[1].Success ? q.Groups[1].Value : q.Groups[2].Value)
-                : tail;
-
-            // 3) Stash → ExecuteIfPossible
-            commandEntities[typeof(WriteInCellCommand)] = new Dictionary<string, object>
-            {
-                ["cell"] = cell,
-                ["text"] = textToWrite ?? string.Empty
-            };
-
-            ExecuteIfPossible(typeof(WriteInCellCommand));
-        }
-
-        private void ExecuteIfPossible(Type t)
-        { 
-            Dictionary<string,object> d;
-            if (!commandEntities.TryGetValue(t, out d))
-                return;
-
-            if (t == typeof(AddCells))
-            {
-                AddCellsMode mode = AddCellsMode.List;
-                var cells = d.Get<List<string>>("cells");
-                string dest = d.Get<List<string>>("destination").FirstOrDefault();
-                var listConnector = d.GetBool("listconnector");
-                var rangeConnector = d.GetBool("rangeconnector");
-                var destConnector = d.GetBool("destinationconnector");
-                var rangeConnectorCount = d.Get<int>("rangeconnectorcount");
-
-                var parsedCells = new List<string>();
-                foreach (var c in cells)
-                {
-                    foreach(var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
-                        parsedCells.Add(parsedCell);
-                }
-
-                //redundant dar eh...
-                if (listConnector is true)
-                    mode = AddCellsMode.List;
-                else if (rangeConnectorCount > 2 || rangeConnector && !destConnector )
-                    mode = AddCellsMode.Range;
-
-                    _log.Raw($"AddCells command will execute the {mode} version");
-                if (string.IsNullOrEmpty(dest))
-                    dest = null;
-                var cmd = new AddCells(parsedCells, dest, mode);
-
-                if (cmd != null)
-                    _executor.Execute(cmd);
-            }
-
-            if (t == typeof(SelectAreaCommand))
-            {
-                var fp = d.Get<string>("firstPoint");
-                var sp = d.Get<string>("secondPoint");
-
-                var cmd = new SelectAreaCommand(fp, sp);
-
-                if (cmd != null)
-                    _executor.Execute(cmd);
-            }
-
-            if (t == typeof(WriteInCellCommand))
-            {
-                var cell = d.Get<string>("cell");
-                var text = d.Get<string>("text");
                 if (string.IsNullOrWhiteSpace(cell))
                 {
-                    _log.Warn("WriteInCell: missing cell.");
-                    return;
+                    var m = CellRx.Match(_lastUtterance);
+                    if (!m.Success) { _log.Warn("WriteInCell: no cell found."); return; }
+                    cell = m.Value.ToUpperInvariant();
                 }
 
-                var cmd = new WriteInCellCommand(cell, text ?? string.Empty);
-                _executor.Execute(cmd);
+                var cellOccur = Regex.Match(_lastUtterance, @"\b" + Regex.Escape(cell) + @"\b", RegexOptions.IgnoreCase);
+                if (!cellOccur.Success) { _log.Warn("WriteInCell: cell not located in utterance."); return; }
+
+                var tail = _lastUtterance.Substring(cellOccur.Index + cellOccur.Length).Trim();
+                tail = Regex.Replace(tail, @"^(in|to|into|with|as|,|:|\-)\s+", "", RegexOptions.IgnoreCase);
+
+                var q = Regex.Match(tail, "^\"([^\"]*)\"|'([^']*)'");
+                var textToWrite = q.Success
+                    ? (q.Groups[1].Success ? q.Groups[1].Value : q.Groups[2].Value)
+                    : tail;
+
+                lock (_gate)
+                {
+                    commandEntities[typeof(WriteInCellCommand)] = new Dictionary<string, object>
+                    {
+                        ["cell"] = cell,
+                        ["text"] = textToWrite ?? string.Empty
+                    };
+                }
+                ExecuteIfPossible(typeof(WriteInCellCommand));
+            }
+            catch (Exception ex)
+            {
+                _log.Error("HWriteInCell failed.", ex);
+            }
+        }
+
+
+        private void ExecuteIfPossible(Type t)
+        {
+            Dictionary<string, object> d;
+            lock (_gate)
+            {
+                if (!commandEntities.TryGetValue(t, out d))
+                    return;
+            }
+
+            try
+            {
+                if (t == typeof(AddCells))
+                {
+                    AddCellsMode mode = AddCellsMode.List;
+                    var cells = d.Get<List<string>>("cells") ?? new List<string>();
+                    string dest = d.Get<List<string>>("destination")?.FirstOrDefault();
+                    var listConnector = d.GetBool("listconnector");
+                    var rangeConnector = d.GetBool("rangeconnector");
+                    var destConnector = d.GetBool("destinationconnector");
+                    var rangeCount = d.Get<int>("rangeconnectorcount");
+
+                    var parsedCells = new List<string>();
+                    foreach (var c in cells)
+                    {
+                        foreach (var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
+                            parsedCells.Add(parsedCell);
+                    }
+
+                    if (parsedCells.Count == 0)
+                    {
+                        _log.Warn("[AddCells] No cells recognized.");
+                        return;
+                    }
+
+                    if (rangeCount > 2 || (rangeConnector && !destConnector))
+                        mode = AddCellsMode.Range;
+
+                    _log.Raw($"AddCells will execute in {mode} mode");
+
+                    var cmd = new AddCells(parsedCells, string.IsNullOrEmpty(dest) ? null : dest, mode);
+                    _executor.Execute(cmd);   // executor catches runtime errors inside Execute(...)
+                }
+                else if (t == typeof(SelectAreaCommand))
+                {
+                    var fp = d.Get<string>("firstPoint");
+                    var sp = d.Get<string>("secondPoint");
+                    if (string.IsNullOrWhiteSpace(fp) || string.IsNullOrWhiteSpace(sp))
+                    {
+                        _log.Warn("[SelectArea] Missing endpoints.");
+                        return;
+                    }
+
+                    try
+                    {
+                        var cmd = new SelectAreaCommand(fp, sp); // ctor could throw -> catch below
+                        _executor.Execute(cmd);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("[SelectArea] Command build failed.", ex);
+                    }
+                }
+                else if (t == typeof(WriteInCellCommand))
+                {
+                    var cell = d.Get<string>("cell");
+                    var text = d.Get<string>("text") ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(cell))
+                    {
+                        _log.Warn("WriteInCell: missing cell.");
+                        return;
+                    }
+
+                    try
+                    {
+                        var cmd = new WriteInCellCommand(cell, text); // ctor could throw -> catch below
+                        _executor.Execute(cmd);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("[WriteInCell] Command build failed.", ex);
+                    }
+                }
+            }
+            finally
+            {
+                // prevent reusing stale data if another intent runs later
+                lock (_gate) commandEntities.Remove(t);
             }
         }
 
