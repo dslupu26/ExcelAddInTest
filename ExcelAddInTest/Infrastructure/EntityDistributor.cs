@@ -17,21 +17,13 @@ using System.Windows.Markup;
 
 namespace ExcelAddInTest
 {
-    public static class DictExt
-    {
-
-        public static T Get<T>(this Dictionary<string, object> d, string key)
-            => d.TryGetValue(key, out var o) && o is T t ? t : default;
-
-         public static bool GetBool(this Dictionary<string, object> d, string key)
-            => d.TryGetValue(key, out var o) && o is bool b && b;
-    }
+  
 
     public class EntityDistributor
     {
         private readonly CluService _clu;
 
-        private Dictionary<Type, Dictionary<string, object>> commandEntities;
+        private Dictionary<string, object> commandData;
         private Dictionary<string, Action<IReadOnlyList<NluEntity>>> intentHandler;
 
         private List<string> cellAddresses;
@@ -46,7 +38,7 @@ namespace ExcelAddInTest
             _clu = clu;
             _executor = executor;
             _log = log;
-            commandEntities = new Dictionary<Type, Dictionary<string, object>>();
+            commandData = new Dictionary<string, object>();
 
             intentHandler = new Dictionary<string, Action<IReadOnlyList<NluEntity>>>
             {
@@ -64,6 +56,7 @@ namespace ExcelAddInTest
 
             try
             {
+                text = "Add A1 and B7 in D1"; // debug line
                 var nlu = await _clu.AnalyzeAsync(text);
                 _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
                 _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
@@ -128,7 +121,7 @@ namespace ExcelAddInTest
             /*if (destinationbool && cell_list.Take(cell_list.Count - 1).Contains(destination.First()))
                 cell_list.RemoveAt(cell_list.Count - 1); // remove last cell if its also the destination*/
 
-            commandEntities[typeof(AddCells)] = new Dictionary<string, object>
+            commandData = new Dictionary<string, object>
             {
                 ["cells"] = cell_list,
                 ["destination"] = destination,
@@ -137,57 +130,8 @@ namespace ExcelAddInTest
                 ["rangeconnectorcount"] = rangeConnectorCount,
                 ["destinationconnector"] = destinationConnector
             };
-            ExecuteIfPossible(typeof(AddCells));
-        }
 
-        private void ExecuteIfPossible(Type t)
-        { 
-            Dictionary<string,object> d;
-            if (!commandEntities.TryGetValue(t, out d))
-                return;
-
-            if (t == typeof(AddCells))
-            {
-                AddCellsMode mode = AddCellsMode.List;
-                var cells = d.Get<List<string>>("cells");
-                string dest = d.Get<List<string>>("destination").FirstOrDefault();
-                var listConnector = d.GetBool("listconnector");
-                var rangeConnector = d.GetBool("rangeconnector");
-                var destConnector = d.GetBool("destinationconnector");
-                var rangeConnectorCount = d.Get<int>("rangeconnectorcount");
-
-                var parsedCells = new List<string>();
-                foreach (var c in cells)
-                {
-                    foreach(var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
-                        parsedCells.Add(parsedCell);
-                }
-
-                //redundant dar eh...
-                if (listConnector is true)
-                    mode = AddCellsMode.List;
-                else if (rangeConnectorCount > 2 || rangeConnector && !destConnector )
-                    mode = AddCellsMode.Range;
-
-                    _log.Raw($"AddCells command will execute the {mode} version");
-                if (string.IsNullOrEmpty(dest))
-                    dest = null;
-                var cmd = new AddCells(parsedCells, dest, mode);
-
-                if (cmd != null)
-                    _executor.Execute(cmd);
-            }
-
-            if (t == typeof(SelectAreaCommand))
-            {
-                var fp = d.Get<string>("firstPoint");
-                var sp = d.Get<string>("secondPoint");
-
-                var cmd = new SelectAreaCommand(fp, sp);
-
-                if (cmd != null)
-                    _executor.Execute(cmd);
-            }
+            _executor.Execute(typeof(AddCells), commandData);
         }
 
         private void HSelectArea(IReadOnlyList<NluEntity> entities)
@@ -204,13 +148,12 @@ namespace ExcelAddInTest
             secondPoint = cells.LastOrDefault();
 
 
-            commandEntities[typeof(SelectAreaCommand)] = new Dictionary<string, object>
+            commandData = new Dictionary<string, object>
             {
                 ["firstPoint"] = firstPoint,
                 ["secondPoint"] = secondPoint
             };
-
-            ExecuteIfPossible(typeof(SelectAreaCommand));
+            _executor.Execute(typeof(SelectAreaCommand), commandData);
         }
 
 
@@ -223,16 +166,18 @@ namespace ExcelAddInTest
         // this here basically goes
         // "return the correct dictionary. else ah well"
 
-        public T GetEntity<T>(Type commandType, string commandKey)
-        {
-            if (commandEntities.TryGetValue(commandType, out var dictionary))
-            {
-                if (dictionary.TryGetValue(commandKey, out var obj) && obj is T t)
-                    return t;
-            }
 
-            return default;
-        }
+        //need to review this later
+        /* public T GetEntity<T>(Type commandType, string commandKey)
+         {
+             if (commandData.TryGetValue(commandType, out var dictionary))
+             {
+                 if (dictionary.TryGetValue(commandKey, out var obj) && obj is T t)
+                     return t;
+             }
+
+             return default;
+         }*/
 
 
 
