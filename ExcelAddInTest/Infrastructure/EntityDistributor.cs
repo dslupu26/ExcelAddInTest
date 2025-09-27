@@ -49,7 +49,7 @@ namespace ExcelAddInTest
                 ["AddCells"] = HAddCells,
                 ["SelectArea"] = HSelectArea,
                 ["WriteInCell"] = HWriteInCell,   // <— NEW
-                ["Write"] = HWriteInCell,   // (optional alias)
+                ["WriteValue"] = HWriteInCell,   // (optional alias)
                 ["Type"] = HWriteInCell    // (optional alias)
             };
 
@@ -65,7 +65,6 @@ namespace ExcelAddInTest
 
             try
             {
-                text = "Add A1 and B7 in D1"; // debug line
                 var nlu = await _clu.AnalyzeAsync(text);
                 _log.Raw("[CLU RAW]\r\n" + nlu.RawJson);
                 _log.Info("[CLU] TopIntent: " + nlu.TopIntent);
@@ -116,9 +115,9 @@ namespace ExcelAddInTest
         private void HAddCells(IReadOnlyList<NluEntity> entities)
         {
             var cell_list = new List<string>();
+            var cell_list_parsed = new List<string>();
             var destination = new List<string>();
 
-            bool destinationConnector = false;
             bool rangeConnector = false;
             int rangeConnectorCount = 0;
             bool listConnector = false;
@@ -140,44 +139,44 @@ namespace ExcelAddInTest
                         listConnector = true;
                         break;
 
-                    case "Destination":
-                        destination.Add(entity.Text);
-                        break;
-
-                    case "DestinationConnector":
-                        destinationConnector = true;
-                        break;
                 }
             }
 
+            foreach (var cell in cell_list)
+            {
+                foreach (var res_cell in TextNormalizer.ExcelCellRegexParser(cell))
+                    cell_list_parsed.Add(res_cell);
+            }
             // Heuristics based on the actual words the user spoke:
             var utter = _lastUtterance ?? string.Empty;
-            var hasInWord = Regex.IsMatch(utter, @"\b(in|into)\b", RegexOptions.IgnoreCase);
+            var hasInWord = Regex.IsMatch(utter, @"\b(in|into|at)\b", RegexOptions.IgnoreCase);
             var hasToWord = Regex.IsMatch(utter, @"\bto\b", RegexOptions.IgnoreCase);
+            var ToWordCount = Regex.Matches(utter, @"\bto\b", RegexOptions.IgnoreCase).Count;
+
 
             // ---- Case 1: "Add A1 to B1" (no "in/into") => in-place add (no formula) ----
-            if (!hasInWord && hasToWord && cell_list.Count >= 2)
+            if (!hasInWord && ToWordCount == 1 && cell_list_parsed.Count == 2 && !listConnector)
             {
-                var dest = cell_list[cell_list.Count - 1];
-                var sources = cell_list.GetRange(0, cell_list.Count - 1);
+                var dest = cell_list_parsed.LastOrDefault();
+                var sources = cell_list_parsed.GetRange(0, cell_list.Count - 1);
 
                 lock (_gate)
                 {
-                    commandEntities[typeof(AddIntoCellCommand)] = new Dictionary<string, object>
+                    commandData = new Dictionary<string, object>
                     {
                         ["sources"] = sources,
                         ["dest"] = dest
                     };
                 }
-                ExecuteIfPossible(typeof(AddIntoCellCommand));
+                _executor.Execute(typeof(AddIntoCellCommand), commandData);
                 return;
             }
 
             // ---- Case 2: Formula writer ("... in C1") ----
             // If CLU didn't tag Destination but we DO have an "in/into", infer last cell as destination.
-            if (destination.Count == 0 && hasInWord && cell_list.Count > 0)
+            if (cell_list_parsed.Count > 2)
             {
-                var inferred = cell_list.Last();
+                var inferred = cell_list_parsed.Last();
                 destination.Add(inferred);
                 _log.Info($"[AddCells] Inferred destination '{inferred}' after 'in/into'.");
                 // optional: remove from sources
@@ -186,21 +185,19 @@ namespace ExcelAddInTest
 
             lock (_gate)
             {
-                commandEntities[typeof(AddCells)] = new Dictionary<string, object>
+                commandData = new Dictionary<string, object>
                 {
-                    ["cells"] = cell_list,
+                    ["cells"] = cell_list_parsed,
                     ["destination"] = destination,
                     ["listconnector"] = listConnector,
                     ["rangeconnector"] = rangeConnector,
                     ["rangeconnectorcount"] = rangeConnectorCount,
-                    ["destinationconnector"] = destinationConnector
+                    ["towordcount"] = ToWordCount
                 };
             }
 
-            ExecuteIfPossible(typeof(AddCells));
+            _executor.Execute(typeof(AddCells), commandData);
         }
-
-
 
 
         private void HWriteInCell(IReadOnlyList<NluEntity> entities)
@@ -213,6 +210,13 @@ namespace ExcelAddInTest
                 string cell = entities?
                     .FirstOrDefault(e => string.Equals(e.Category, "Cell", StringComparison.OrdinalIgnoreCase))
                     ?.Text;
+                var textToWrite = entities?
+                    .FirstOrDefault(e => string.Equals(e.Category, "Value", StringComparison.OrdinalIgnoreCase))?
+                    .Text;
+                
+                var operation = entities?
+                    .FirstOrDefault(e => string.Equals(e.Category, "Operation", StringComparison.OrdinalIgnoreCase))?
+                    .Text;
 
                 if (string.IsNullOrWhiteSpace(cell))
                 {
@@ -221,26 +225,27 @@ namespace ExcelAddInTest
                     cell = m.Value.ToUpperInvariant();
                 }
 
-                var cellOccur = Regex.Match(_lastUtterance, @"\b" + Regex.Escape(cell) + @"\b", RegexOptions.IgnoreCase);
-                if (!cellOccur.Success) { _log.Warn("WriteInCell: cell not located in utterance."); return; }
-
-                var tail = _lastUtterance.Substring(cellOccur.Index + cellOccur.Length).Trim();
-                tail = Regex.Replace(tail, @"^(in|to|into|with|as|,|:|\-)\s+", "", RegexOptions.IgnoreCase);
-
-                var q = Regex.Match(tail, "^\"([^\"]*)\"|'([^']*)'");
-                var textToWrite = q.Success
-                    ? (q.Groups[1].Success ? q.Groups[1].Value : q.Groups[2].Value)
-                    : tail;
+                if (string.IsNullOrWhiteSpace(textToWrite))
+                {
+                    textToWrite = Regex.Replace(_lastUtterance, $"{operation}", "");
+                    textToWrite = Regex.Replace(textToWrite, "(number|word)", "");
+                    textToWrite = Regex.Replace(textToWrite, "value","");
+                    textToWrite = Regex.Replace(textToWrite, "(in|into|at)", "");
+                    textToWrite = Regex.Replace(textToWrite, CellRx.Match(textToWrite).ToString(),"");
+                    textToWrite = Regex.Replace(textToWrite, @"\.", "");
+                    textToWrite = textToWrite.Trim();
+                    _log.Warn("WriteInCell: no text to write found, attempting to infer from utterance."); 
+                }
 
                 lock (_gate)
                 {
-                    commandEntities[typeof(WriteInCellCommand)] = new Dictionary<string, object>
+                    commandData = new Dictionary<string, object>
                     {
                         ["cell"] = cell,
                         ["text"] = textToWrite ?? string.Empty
                     };
                 }
-                ExecuteIfPossible(typeof(WriteInCellCommand));
+                _executor.Execute(typeof(WriteInCellCommand), commandData);
             }
             catch (Exception ex)
             {
@@ -248,121 +253,6 @@ namespace ExcelAddInTest
             }
         }
 
-
-        private void ExecuteIfPossible(Type t)
-        {
-            Dictionary<string, object> d;
-            lock (_gate)
-            {
-                if (!commandEntities.TryGetValue(t, out d))
-                    return;
-            }
-
-            try
-            {
-                if (t == typeof(AddCells))
-                {
-                    var cells = d.Get<List<string>>("cells") ?? new List<string>();
-                    var dest = d.Get<List<string>>("destination")?.FirstOrDefault();
-                    var hasRangeConnector = d.GetBool("rangeconnector");
-
-                    // normalize/expand (your parser)
-                    var parsedCells = new List<string>();
-                    foreach (var c in cells)
-                        foreach (var parsed in TextNormalizer.ExcelCellRegexParser(c))
-                            parsedCells.Add(parsed);
-
-                    if (parsedCells.Count == 0)
-                    {
-                        _log.Warn("[AddCells] No cells recognized.");
-                        return;
-                    }
-
-                    // Range if we have a range connector and at least two cells; otherwise List
-                    var mode = (hasRangeConnector && parsedCells.Count >= 2)
-                        ? AddCellsMode.Range
-                        : AddCellsMode.List;
-
-                    // Destination required (per your spec "... in B2/C1")
-                    if (string.IsNullOrWhiteSpace(dest))
-                    {
-                        _log.Warn("[AddCells] Missing destination cell (say for example: '… in B2').");
-                        return;
-                    }
-
-                    var cmd = new AddCells(parsedCells, dest, mode);
-                    _executor.Execute(cmd);
-                    return;
-                }
-                else if (t == typeof(SelectAreaCommand))
-                {
-                    var fp = d.Get<string>("firstPoint");
-                    var sp = d.Get<string>("secondPoint");
-                    if (string.IsNullOrWhiteSpace(fp) || string.IsNullOrWhiteSpace(sp))
-                    {
-                        _log.Warn("[SelectArea] Missing endpoints.");
-                        return;
-                    }
-
-                    try
-                    {
-                        var cmd = new SelectAreaCommand(fp, sp);
-                        _executor.Execute(cmd);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error("[SelectArea] Command build failed.", ex);
-                    }
-                }
-                else if (t == typeof(AddIntoCellCommand))
-                {
-                    var sources = d.Get<List<string>>("sources") ?? new List<string>();
-                    var dest = d.Get<string>("dest");
-
-                    if (string.IsNullOrWhiteSpace(dest) || sources.Count == 0)
-                    {
-                        _log.Warn("[AddInto] Missing destination or sources.");
-                        return;
-                    }
-
-                    try
-                    {
-                        var cmd = new AddIntoCellCommand(sources, dest);
-                        _executor.Execute(cmd);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error("[AddInto] Command build failed.", ex);
-                    }
-                    return;
-                }
-                else if (t == typeof(WriteInCellCommand))
-                {
-                    var cell = d.Get<string>("cell");
-                    var text = d.Get<string>("text") ?? string.Empty;
-                    if (string.IsNullOrWhiteSpace(cell))
-                    {
-                        _log.Warn("WriteInCell: missing cell.");
-                        return;
-                    }
-
-                    try
-                    {
-                        var cmd = new WriteInCellCommand(cell, text);
-                        _executor.Execute(cmd);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error("[WriteInCell] Command build failed.", ex);
-                    }
-                }
-            }
-            finally
-            {
-                // prevent reusing stale data if another intent runs later
-                lock (_gate) commandEntities.Remove(t);
-            }
-        }
 
 
         private void HSelectArea(IReadOnlyList<NluEntity> entities)
@@ -384,7 +274,7 @@ namespace ExcelAddInTest
                 ["firstPoint"] = firstPoint,
                 ["secondPoint"] = secondPoint
             };
-            _executor.Execute(typeof(SelectAreaCommand), commandData);
+            _executor.Execute(typeof(SelectAreaCommand),commandData);
         }
 
 
@@ -397,23 +287,6 @@ namespace ExcelAddInTest
         // this here basically goes
         // "return the correct dictionary. else ah well"
 
-
-        //need to review this later
-        /* public T GetEntity<T>(Type commandType, string commandKey)
-         {
-             if (commandData.TryGetValue(commandType, out var dictionary))
-             {
-                 if (dictionary.TryGetValue(commandKey, out var obj) && obj is T t)
-                     return t;
-             }
-
-             return default;
-         }*/
-
-
-
-        // debugging purposes
-        // can ignore
 
         public void WriteData()
         {

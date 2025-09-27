@@ -1,17 +1,9 @@
 ﻿using ExcelAddInTest.ExcelApi.Commands;
 using ExcelAddInTest.ExcelApi.Commands.Enums;
 using ExcelAddInTest.Infrastructure.Logger;
-using ExcelAddInTest.Infrastructure.Text;
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 
 
 namespace ExcelAddInTest.ExcelApi
@@ -35,6 +27,7 @@ namespace ExcelAddInTest.ExcelApi
         private IExcelActions _excel;
         private ILogger _log;
         private IExcelCommand cmd = null;
+        private readonly object _gate = new object();
         public CommandExecutor(IExcelActions excel, ILogger log)
         {
             _excel = excel ?? throw new ArgumentNullException(nameof(excel));
@@ -42,41 +35,122 @@ namespace ExcelAddInTest.ExcelApi
         }
 
         /// <summary>Execute a command; returns true if it completed without throwing.</summary>    
-        public bool Execute(IExcelCommand cmd)
+        public bool Execute(Type t, Dictionary<string,object> d)
         {
-            if (cmd == null)
+            if (t == null)
             {
-                _log.Error("CommandExecutor: command is null.");
+                _log.Error($"CommandExecutor Error: command type is null!");
                 return false;
             }
 
-            var name = cmd.GetType().Name;
-            var sw = Stopwatch.StartNew();
             try
             {
-                cmd.Execute(_excel);
-                _log.Info($"[{name}] OK in {sw.ElapsedMilliseconds} ms");
-                return true;
-            }
-            catch (CommandExecutionException ex)
-            {
-                _log.Error($"[{name}] Command execution error.", ex);
-            }
-            catch (ArgumentException ex)
-            {
-                _log.Error($"[{name}] Invalid argument(s).", ex);
-            }
-            catch (COMException ex)
-            {
-                _log.Error($"[{name}] Excel interop failed.", ex);
-            }
-            catch (Exception ex)
-            {
-                _log.Error($"[{name}] Unexpected error.", ex);
+                if (t == typeof(AddCells))
+                {
+                    var cells = d.Get<List<string>>("cells") ?? new List<string>();
+                    var dest = cells.LastOrDefault();
+                    var hasRangeConnector = d.GetBool("rangeconnector");
+                    var toWordCount = d.Get<int>("towordcount");
+                    var listConnector = d.Get<bool>("listconnector");
+
+                    AddCellsMode mode;
+                    //the case when we have 1 "to" and 2 cells is treated in EntityDistribuitor =>AddIntoCellsCommand
+                    //then we have the following:
+                    //1.if the word "to" is used 2 or more times and we have more than 2 cells => range
+                    //2.if the word "to" is used once and we have 3 cells and no list connector => range
+                    //3.if the word "to" is used once and we have a list connector => list
+                    //4.in all other cases => list, in particular this one also catches when we got enumeration of cells
+                    if (toWordCount >= 2 && cells.Count() > 2) {mode = AddCellsMode.Range;}
+                    else if (toWordCount == 1 && cells.Count == 3 && !listConnector) {mode = AddCellsMode.Range;}
+                    else if(toWordCount == 1 && listConnector) { mode = AddCellsMode.List; }
+                    else { mode = AddCellsMode.List; }
+
+                    //i will not remove this one yet. 
+                  /*// Range if we have a range connector and at least two cells; otherwise List
+                    mode = (hasRangeConnector && parsedCells.Count >= 2)
+                                ? AddCellsMode.Range
+                                : AddCellsMode.List;*/
+
+                    // Destination required (per your spec "... in B2/C1")
+                    if (string.IsNullOrWhiteSpace(dest))
+                    {
+                        _log.Warn("[AddCells] Missing destination cell (say for example: '… in B2').");
+                        return false;
+                    }
+
+                    var cmd = new AddCells(cells, dest, mode);
+                    cmd.Execute(_excel);
+                    return true;
+                }
+                else if (t == typeof(SelectAreaCommand))
+                {
+                    var fp = d.Get<string>("firstPoint");
+                    var sp = d.Get<string>("secondPoint");
+                    if (string.IsNullOrWhiteSpace(fp) || string.IsNullOrWhiteSpace(sp))
+                    {
+                        _log.Warn("[SelectArea] Missing endpoints.");
+                        return false;
+                    }
+
+                    try
+                    {
+                        var cmd = new SelectAreaCommand(fp, sp);
+                        cmd.Execute(_excel);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("[SelectArea] Command build failed.", ex);
+                        return false;
+                    }
+                    return true;
+                }
+                else if (t == typeof(AddIntoCellCommand))
+                {
+                    var sources = d.Get<List<string>>("sources") ?? new List<string>();
+                    var dest = d.Get<string>("dest");
+
+                    if (string.IsNullOrWhiteSpace(dest) || sources.Count == 0)
+                    {
+                        _log.Warn("[AddInto] Missing destination or sources.");
+                        return false;
+                    }
+
+                    try
+                    {
+                        var cmd = new AddIntoCellCommand(sources, dest);
+                        cmd.Execute(_excel);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("[AddInto] Command build failed.", ex);
+                    }
+                    return true;
+                }
+                else if (t == typeof(WriteInCellCommand))
+                {
+                    var cell = d.Get<string>("cell");
+                    var text = d.Get<string>("text") ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(cell))
+                    {
+                        _log.Warn("WriteInCell: missing cell.");
+                        return false;
+                    }
+
+                    try
+                    {
+                        var cmd = new WriteInCellCommand(cell, text);
+                        cmd.Execute(_excel);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("[WriteInCell] Command build failed.", ex);
+                    }
+                    return true;
+                }
             }
             finally
             {
-                sw.Stop();
+                // leaving this here just in case
             }
 
             return false;
