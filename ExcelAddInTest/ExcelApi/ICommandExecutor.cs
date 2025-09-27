@@ -11,7 +11,7 @@ namespace ExcelAddInTest.ExcelApi
     /// </summary>
     public interface ICommandExecutor
     {
-        bool Execute(IExcelCommand command);
+        bool Execute(Type t, Dictionary<string, object> d);
 
     }
 }
