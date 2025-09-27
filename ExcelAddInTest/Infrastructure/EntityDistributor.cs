@@ -6,6 +6,7 @@ using ExcelAddInTest.Infrastructure.Text;
 using ExcelAddInTest.Nlu;
 using ExcelAddInTest.Nlu.NluModels;
 using Microsoft.CognitiveServices.Speech;
+using Microsoft.Office.Interop.Excel;
 using Microsoft.Office.Tools;
 using System;
 using System.Collections.Generic;
@@ -50,7 +51,8 @@ namespace ExcelAddInTest
                 ["SelectArea"] = HSelectArea,
                 ["WriteInCell"] = HWriteInCell,   // <— NEW
                 ["WriteValue"] = HWriteInCell,   // (optional alias)
-                ["Type"] = HWriteInCell    // (optional alias)
+                ["Type"] = HWriteInCell,    // (optional alias)
+                ["Bold"] = HBoldText
             };
 
         }
@@ -277,23 +279,32 @@ namespace ExcelAddInTest
             _executor.Execute(typeof(SelectAreaCommand),commandData);
         }
 
-
-        // ---------- Get Over Here ----------
-        //
-        //
-        // adding this just to retrieve the dictionaries whenever we call the commands
-        // since we're passing them directly to the commands' constructors
-        // 
-        // this here basically goes
-        // "return the correct dictionary. else ah well"
-
-
-        public void WriteData()
+        private void HBoldText(IReadOnlyList<NluEntity> entities)
         {
-            MessageBox.Show($"Destination cell : {cellDestination}\n");
+            List<string> cellAddresses = new List<string>();
 
-            //Console.WriteLine($"Destination cell : {cellDestination}\n");
-            //Console.WriteLine($"Cells list : {cellAddresses}");
+            bool ERangeConnector = false;
+
+            foreach (var entity in entities)
+            {
+                if (entity.Category == "Cell")
+                    foreach (var resCell in TextNormalizer.ExcelCellRegexParser(entity.Text))
+                        cellAddresses.Add(resCell);
+                if (entity.Category == "RangeConnector")
+                    ERangeConnector = true;
+            }
+
+            commandData = new Dictionary<string, object>
+            {
+                ["Cells"] = cellAddresses,
+                ["RangeConnector"] = ERangeConnector
+            };
+                
+
+            if (cellAddresses.Count() > 0)
+            {
+                _executor.Execute(typeof(BoldCellCommand), commandData);
+            }
         }
     }
 }

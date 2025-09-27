@@ -298,6 +298,7 @@
     <Compile Include="ExcelApi\Commands\AddCells.cs" />
     <Compile Include="ExcelApi\CommandExecutor.cs" />
     <Compile Include="ExcelApi\Commands\AddIntoCellCommand.cs" />
+    <Compile Include="ExcelApi\Commands\BoldCellCommand.cs" />
     <Compile Include="ExcelApi\Commands\Enums\AddCellsMode.cs" />
     <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
     <Compile Include="ExcelApi\Commands\WriteInCellCommand.cs" />
@@ -364,6 +365,7 @@
     <EmbeddedResource Include="UI\UserControlPane.resx">
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="ExcelAddInTest_1_TemporaryKey.pfx" />
     <None Include="ExcelAddInTest_2_TemporaryKey.pfx" />
     <None Include="Infrastructure\app.config" />
     <None Include="packages.config" />
@@ -395,10 +397,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ExcelAddInTest_2_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>ExcelAddInTest_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>C20DC81067E29789A095CE3A8DADA57CBAB2A7CD</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>98702BA44B4322D6B08AF5D5CA9F46E989429E07</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
