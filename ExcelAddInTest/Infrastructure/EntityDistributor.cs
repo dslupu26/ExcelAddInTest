@@ -210,6 +210,13 @@ namespace ExcelAddInTest
                 string cell = entities?
                     .FirstOrDefault(e => string.Equals(e.Category, "Cell", StringComparison.OrdinalIgnoreCase))
                     ?.Text;
+                var textToWrite = entities?
+                    .FirstOrDefault(e => string.Equals(e.Category, "Value", StringComparison.OrdinalIgnoreCase))?
+                    .Text;
+                
+                var operation = entities?
+                    .FirstOrDefault(e => string.Equals(e.Category, "Operation", StringComparison.OrdinalIgnoreCase))?
+                    .Text;
 
                 if (string.IsNullOrWhiteSpace(cell))
                 {
@@ -218,16 +225,17 @@ namespace ExcelAddInTest
                     cell = m.Value.ToUpperInvariant();
                 }
 
-                var cellOccur = Regex.Match(_lastUtterance, @"\b" + Regex.Escape(cell) + @"\b", RegexOptions.IgnoreCase);
-                if (!cellOccur.Success) { _log.Warn("WriteInCell: cell not located in utterance."); return; }
-
-                var tail = _lastUtterance.Substring(cellOccur.Index + cellOccur.Length).Trim();
-                tail = Regex.Replace(tail, @"^(in|to|into|with|as|,|:|\-)\s+", "", RegexOptions.IgnoreCase);
-
-                var q = Regex.Match(tail, "^\"([^\"]*)\"|'([^']*)'");
-                var textToWrite = q.Success
-                    ? (q.Groups[1].Success ? q.Groups[1].Value : q.Groups[2].Value)
-                    : tail;
+                if (string.IsNullOrWhiteSpace(textToWrite))
+                {
+                    textToWrite = Regex.Replace(_lastUtterance, $"{operation}", "");
+                    textToWrite = Regex.Replace(textToWrite, "(number|word)", "");
+                    textToWrite = Regex.Replace(textToWrite, "value","");
+                    textToWrite = Regex.Replace(textToWrite, "(in|into|at)", "");
+                    textToWrite = Regex.Replace(textToWrite, CellRx.Match(textToWrite).ToString(),"");
+                    textToWrite = Regex.Replace(textToWrite, @"\.", "");
+                    textToWrite = textToWrite.Trim();
+                    _log.Warn("WriteInCell: no text to write found, attempting to infer from utterance."); 
+                }
 
                 lock (_gate)
                 {
@@ -266,7 +274,7 @@ namespace ExcelAddInTest
                 ["firstPoint"] = firstPoint,
                 ["secondPoint"] = secondPoint
             };
-            _executor.Execute(typeof(SelectAreaCommand), commandData);
+            _executor.Execute(typeof(SelectAreaCommand),commandData);
         }
 
 
@@ -279,23 +287,6 @@ namespace ExcelAddInTest
         // this here basically goes
         // "return the correct dictionary. else ah well"
 
-
-        //need to review this later
-        /* public T GetEntity<T>(Type commandType, string commandKey)
-         {
-             if (commandData.TryGetValue(commandType, out var dictionary))
-             {
-                 if (dictionary.TryGetValue(commandKey, out var obj) && obj is T t)
-                     return t;
-             }
-
-             return default;
-         }*/
-
-
-
-        // debugging purposes
-        // can ignore
 
         public void WriteData()
         {

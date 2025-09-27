@@ -35,7 +35,7 @@ namespace ExcelAddInTest.ExcelApi
         }
 
         /// <summary>Execute a command; returns true if it completed without throwing.</summary>    
-        public bool Execute(Type t, Dictionary<string, object> d)
+        public bool Execute(Type t, Dictionary<string,object> d)
         {
             if (t == null)
             {
@@ -60,16 +60,16 @@ namespace ExcelAddInTest.ExcelApi
                     //2.if the word "to" is used once and we have 3 cells and no list connector => range
                     //3.if the word "to" is used once and we have a list connector => list
                     //4.in all other cases => list, in particular this one also catches when we got enumeration of cells
-                    if (toWordCount >= 2 && cells.Count() > 2) { mode = AddCellsMode.Range; }
-                    else if (toWordCount == 1 && cells.Count == 3 && !listConnector) { mode = AddCellsMode.Range; }
-                    else if (toWordCount == 1 && listConnector) { mode = AddCellsMode.List; }
+                    if (toWordCount >= 2 && cells.Count() > 2) {mode = AddCellsMode.Range;}
+                    else if (toWordCount == 1 && cells.Count == 3 && !listConnector) {mode = AddCellsMode.Range;}
+                    else if(toWordCount == 1 && listConnector) { mode = AddCellsMode.List; }
                     else { mode = AddCellsMode.List; }
 
                     //i will not remove this one yet. 
-                    /*// Range if we have a range connector and at least two cells; otherwise List
-                      mode = (hasRangeConnector && parsedCells.Count >= 2)
-                                  ? AddCellsMode.Range
-                                  : AddCellsMode.List;*/
+                  /*// Range if we have a range connector and at least two cells; otherwise List
+                    mode = (hasRangeConnector && parsedCells.Count >= 2)
+                                ? AddCellsMode.Range
+                                : AddCellsMode.List;*/
 
                     // Destination required (per your spec "... in B2/C1")
                     if (string.IsNullOrWhiteSpace(dest))

@@ -235,7 +235,11 @@ public class VoiceInterpreter
     
     private string NormalizeForExcel(SpeechRecognitionResult e)
     {
-
+        if (string.IsNullOrEmpty(e.Text))
+        {
+            _log.Warn("No speech recognized.");
+            return "";
+        }
         // detailed results are in the JSON
         var json = e.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
 
