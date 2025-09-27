@@ -147,6 +147,26 @@ namespace ExcelAddInTest.ExcelApi
                     }
                     return true;
                 }
+                else if(t == typeof(BoldCellCommand))
+                {
+                    var cells = d.Get<List<string>>("Cells");
+                    var range = d.Get<bool>("RangeConnector");
+
+                    try
+                    {
+                        if (range == true && cells.Count != 2)
+                            throw new Exception(@"CommandExecutor >> do NOT say something along the lines of ""bold from A1 to B5C6""");
+
+                        var cmd = new BoldCellCommand(cells, range);
+                        cmd.Execute(_excel);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error("CommandExecutor >> [BoldCells] no work pls call Handy Manny ||| " + ex.Message);
+                    }
+                    return true;
+
+                }
             }
             finally
             {
