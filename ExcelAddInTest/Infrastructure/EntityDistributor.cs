@@ -47,7 +47,10 @@ namespace ExcelAddInTest
             intentHandler = new Dictionary<string, Action<IReadOnlyList<NluEntity>>>
             {
                 ["AddCells"] = HAddCells,
-                ["SelectArea"] = HSelectArea
+                ["SelectArea"] = HSelectArea,
+                ["WriteInCell"] = HWriteInCell,   // <— NEW
+                ["WriteValue"] = HWriteInCell,   // (optional alias)
+                ["Type"] = HWriteInCell    // (optional alias)
             };
 
         }
@@ -196,11 +199,13 @@ namespace ExcelAddInTest
             _executor.Execute(typeof(AddCells), commandData);
         }
 
-        private void ExecuteIfPossible(Type t)
-        { 
-            Dictionary<string,object> d;
-            if (!commandEntities.TryGetValue(t, out d))
-                return;
+
+        private void HWriteInCell(IReadOnlyList<NluEntity> entities)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(_lastUtterance))
+                    return;
 
                 string cell = entities?
                     .FirstOrDefault(e => string.Equals(e.Category, "Cell", StringComparison.OrdinalIgnoreCase))
@@ -222,29 +227,29 @@ namespace ExcelAddInTest
 
                 if (string.IsNullOrWhiteSpace(textToWrite))
                 {
-                    foreach(var parsedCell in TextNormalizer.ExcelCellRegexParser(c))
-                        parsedCells.Add(parsedCell);
+                    textToWrite = Regex.Replace(_lastUtterance, $"{operation}", "");
+                    textToWrite = Regex.Replace(textToWrite, "(number|word)", "");
+                    textToWrite = Regex.Replace(textToWrite, "value","");
+                    textToWrite = Regex.Replace(textToWrite, "(in|into|at)", "");
+                    textToWrite = Regex.Replace(textToWrite, CellRx.Match(textToWrite).ToString(),"");
+                    textToWrite = Regex.Replace(textToWrite, @"\.", "");
+                    textToWrite = textToWrite.Trim();
+                    _log.Warn("WriteInCell: no text to write found, attempting to infer from utterance."); 
                 }
 
-                //redundant dar eh...
-                if (listConnector is true)
-                    mode = AddCellsMode.List;
-                else if (rangeConnectorCount > 2 || rangeConnector && !destConnector )
-                    mode = AddCellsMode.Range;
-
-                _log.Raw($"AddCells command will execute the {mode} version");
-                if (string.IsNullOrEmpty(dest))
-                    dest = null;
-                var cmd = new AddCells(parsedCells, dest, mode);
-
-                if (cmd != null)
-                    _executor.Execute(cmd);
-                    
+                lock (_gate)
+                {
+                    commandData = new Dictionary<string, object>
+                    {
+                        ["cell"] = cell,
+                        ["text"] = textToWrite ?? string.Empty
+                    };
+                }
+                _executor.Execute(typeof(WriteInCellCommand), commandData);
             }
-
-            if (t == typeof(WriteTextToCell))
+            catch (Exception ex)
             {
-                // blah blah blah, blah blah blah
+                _log.Error("HWriteInCell failed.", ex);
             }
         }
 
@@ -270,43 +275,6 @@ namespace ExcelAddInTest
                 ["secondPoint"] = secondPoint
             };
             _executor.Execute(typeof(SelectAreaCommand),commandData);
-        }
-
-        private void HWriteText(IReadOnlyList<NluEntity> entities)
-        {
-            string address = null;
-            string text = null;
-
-            foreach (var entity in entities)
-            {
-                if (entity.Category == "Cell")
-                    address = entity.Text;
-                else if (entity.Category == "Text")
-                    text = entity.Text;
-            }
-
-            if (!string.IsNullOrEmpty(address) && !string.IsNullOrEmpty(text))
-            {
-                var cmd = new WriteTextToCell(address, text);
-                _executor.Execute(cmd);
-            }
-        }
-
-        private void HBoldText(IReadOnlyList<NluEntity> entities)
-        {
-            List<string> cellAddresses = new List<string>();
-
-            foreach (var entity in entities)
-            {
-                if (entity.Category == "Cell")
-                    cellAddresses.Add(entity.Text);
-            }
-
-            if (cellAddresses.Count() > 0)
-            {
-                var cmd = new BoldCellCommand(cellAddresses);
-                _executor.Execute(cmd);
-            }
         }
 
 

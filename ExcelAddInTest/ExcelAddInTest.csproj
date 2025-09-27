@@ -297,18 +297,10 @@
     <Compile Include="ExcelApi\CommandExecutionException.cs" />
     <Compile Include="ExcelApi\Commands\AddCells.cs" />
     <Compile Include="ExcelApi\CommandExecutor.cs" />
-<<<<<<< Updated upstream
     <Compile Include="ExcelApi\Commands\AddIntoCellCommand.cs" />
     <Compile Include="ExcelApi\Commands\Enums\AddCellsMode.cs" />
     <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
     <Compile Include="ExcelApi\Commands\WriteInCellCommand.cs" />
-=======
-    <Compile Include="ExcelApi\Commands\BoldCellCommand.cs" />
-    <Compile Include="ExcelApi\Commands\BoldSelectedCellsCommand.cs" />
-    <Compile Include="ExcelApi\Commands\Enums\AddCellsMode.cs" />
-    <Compile Include="ExcelApi\Commands\SelectAreaCommand.cs" />
-    <Compile Include="ExcelApi\Commands\WriteTextToCellCommand.cs" />
->>>>>>> Stashed changes
     <Compile Include="ExcelApi\ExcelFacade.cs" />
     <Compile Include="ExcelApi\ICommandExecutor.cs" />
     <Compile Include="ExcelApi\IExcelActions.cs" />
@@ -373,7 +365,6 @@
       <DependentUpon>UserControlPane.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="ExcelAddInTest_2_TemporaryKey.pfx" />
-    <None Include="ExcelAddInTest_TemporaryKey.pfx" />
     <None Include="Infrastructure\app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -404,10 +395,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ExcelAddInTest_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>ExcelAddInTest_2_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>DBEAA7A5A296ACA1F8C78CA0607A0062F26A5132</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>A4E57E7E023F9E594BDD6C3DB6972BD37539AA55</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
