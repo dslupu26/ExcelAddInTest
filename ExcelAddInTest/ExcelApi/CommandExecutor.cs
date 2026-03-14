@@ -1,4 +1,4 @@
-﻿using ExcelAddInTest.ExcelApi.Commands;
+﻿﻿using ExcelAddInTest.ExcelApi.Commands;
 using ExcelAddInTest.ExcelApi.Commands.Enums;
 using ExcelAddInTest.Infrastructure.Logger;
 using System;
@@ -54,18 +54,17 @@ namespace ExcelAddInTest.ExcelApi
                     var listConnector = d.Get<bool>("listconnector");
 
                     AddCellsMode mode;
-                    //the case when we have 1 "to" and 2 cells is treated in EntityDistribuitor =>AddIntoCellsCommand
-                    //then we have the following:
-                    //1.if the word "to" is used 2 or more times and we have more than 2 cells => range
-                    //2.if the word "to" is used once and we have 3 cells and no list connector => range
-                    //3.if the word "to" is used once and we have a list connector => list
-                    //4.in all other cases => list, in particular this one also catches when we got enumeration of cells
+                    // The case with 1 "to" and 2 cells is handled in EntityDistributor => AddIntoCellsCommand
+                    // Rules:
+                    // 1. "to" used >= 2 times with > 2 cells => range
+                    // 2. "to" used once, 3 cells, no list connector => range
+                    // 3. "to" used once, with list connector => list
+                    // 4. all other cases => list (including cell enumerations)
                     if (toWordCount >= 2 && cells.Count() > 2) {mode = AddCellsMode.Range;}
                     else if (toWordCount == 1 && cells.Count == 3 && !listConnector) {mode = AddCellsMode.Range;}
                     else if(toWordCount == 1 && listConnector) { mode = AddCellsMode.List; }
                     else { mode = AddCellsMode.List; }
 
-                    //i will not remove this one yet. 
                   /*// Range if we have a range connector and at least two cells; otherwise List
                     mode = (hasRangeConnector && parsedCells.Count >= 2)
                                 ? AddCellsMode.Range

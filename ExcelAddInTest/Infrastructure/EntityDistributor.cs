@@ -1,4 +1,4 @@
-﻿using ExcelAddInTest.ExcelApi;
+﻿﻿using ExcelAddInTest.ExcelApi;
 using ExcelAddInTest.ExcelApi.Commands;
 using ExcelAddInTest.ExcelApi.Commands.Enums;
 using ExcelAddInTest.Infrastructure.Logger;
@@ -24,8 +24,7 @@ namespace ExcelAddInTest
     {
         private readonly CluService _clu;
         private readonly object _gate = new object();
-        private static readonly Regex CellRx = new Regex(@"\b[A-Z]{1,3}\d{1,7}\b", RegexOptions.Compiled); // Regex idiot for WriteInCell
-        // Probably should change it later
+        private static readonly Regex CellRx = new Regex(@"\b[A-Z]{1,3}\d{1,7}\b", RegexOptions.Compiled); // TODO: improve regex for WriteInCell
 
         private Dictionary<string, object> commandData;
         private Dictionary<string, Action<IReadOnlyList<NluEntity>>> intentHandler;
@@ -106,13 +105,7 @@ namespace ExcelAddInTest
         // --------------- Action Handlers ---------------
         //
         //
-        // these down here execute the commands (i mean calling the methods not the guillotine)
-        // to add more you just. add another handler
-        // cheers mate. 
-        //
-        //
-        // we then give this into command executor
-        // and just let it do its funky little thing
+        // Action handlers to execute commands. Add more handlers as needed.
 
         private void HAddCells(IReadOnlyList<NluEntity> entities)
         {
@@ -265,7 +258,7 @@ namespace ExcelAddInTest
             var cells = entities.Where(e => e.Category == "Cell").Select(e => e.Text).ToList();
 
 
-            // this here assumes that we select from A to B, and just that; not multiple areas or other shenanigans
+            // assumes a single area selection from A to B
 
             firstPoint = cells.FirstOrDefault();
             secondPoint = cells.LastOrDefault();

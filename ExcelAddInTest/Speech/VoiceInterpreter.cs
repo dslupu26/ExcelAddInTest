@@ -27,8 +27,8 @@ public class VoiceInterpreter
     private readonly ILogger _log;
     private readonly IIntentRouter _intentRouter;
 
-    private CancellationTokenSource _cts;          // sesiunea curentă
-    private CancellationTokenSource _deadlineCts;  // timerul de auto-stop (rearmabil)
+    private CancellationTokenSource _cts;          // current session
+    private CancellationTokenSource _deadlineCts;  // auto-stop timer (resettable)
     private bool _isListening;
     private VoiceListenOptions _opts = new VoiceListenOptions();
 
@@ -36,7 +36,7 @@ public class VoiceInterpreter
     private Dictionary<string, IExcelCommand> _commands;
 
     public VoiceInterpreter(
-        INlu clu,                           // <- folosește interfața aici
+        INlu clu,                           // <- use the interface here
         IExcelActions exec,
         ILogger log,
         EntityDistributor ent,
@@ -61,9 +61,9 @@ public class VoiceInterpreter
 
         var config = SpeechConfig.FromSubscription(Config.SpeechKey, Config.SpeechRegion);
         config.SpeechRecognitionLanguage = _opts.Language;
-        config.OutputFormat = OutputFormat.Detailed; //we want to get the NBest list from the recognizer
+        config.OutputFormat = OutputFormat.Detailed; // require detailed format for NBest list
 
-        // time-out-uri de liniște (în ms)
+        // silence time-outs (in ms)
         config.SetProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
                            _opts.InitialSilenceTimeoutMs.ToString());
         config.SetProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
@@ -99,7 +99,7 @@ public class VoiceInterpreter
         await recognizer.StartContinuousRecognitionAsync();
         _log.Info("Started (speak now)");
 
-        // (re)armează deadline-urile din opțiuni
+        // (re)arm deadlines from options
         StartDeadlines();
     }
 
@@ -130,8 +130,8 @@ public class VoiceInterpreter
     }
 
     /// <summary>
-    /// Actualizează opțiunile în timp ce ascultă.
-    /// Aplică live doar deadline-urile; Mode/Limbă/Silence timeouts cer Stop+Start.
+    /// Updates the options while listening.
+    /// Only applies deadlines live; Mode/Language/Silence timeouts require Stop+Start.
     /// </summary>
     public void UpdateOptions(VoiceListenOptions newOpts)
     {
@@ -147,7 +147,7 @@ public class VoiceInterpreter
             if (deadlinesChanged)
                 StartDeadlines();
 
-            // restul necesită restart
+            // the rest require a restart
             if (old.Mode != newOpts.Mode)
                 _log.Warn("Mode changed — Stop & Start to apply.");
 
@@ -163,17 +163,17 @@ public class VoiceInterpreter
     // ====================== Helpers ======================
 
     /// <summary>
-    /// Armează un singur timer de auto-oprire cu minimul dintre AutoStopAfter și MaxDuration.
+    /// Arms a single auto-stop timer with the minimum of AutoStopAfter and MaxDuration.
     /// </summary>
     private void StartDeadlines()
     {
         if (!_isListening || recognizer == null || _opts.Mode == ListenMode.SingleUtterance)
             return;
 
-        // oprește timerul precedent (dacă există)
+        // stop the previous timer (if it exists)
         _deadlineCts?.Cancel();
 
-        // niciun deadline setat → nimic de făcut
+        // no deadline set → nothing to do
         if (!_opts.AutoStopAfter.HasValue && !_opts.MaxDuration.HasValue)
             return;
 
@@ -195,7 +195,7 @@ public class VoiceInterpreter
             _log.Info($"{tag} elapsed → stopping.");
             await StopAsync();
         }
-        catch (TaskCanceledException) { /* rearmat sau oprit manual */ }
+        catch (TaskCanceledException) { /* rearmed or stopped manually */ }
     }
 
     private void WireEvents()
@@ -243,7 +243,7 @@ public class VoiceInterpreter
         // detailed results are in the JSON
         var json = e.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
 
-        //now we will extract the NBest list from the JSON. NBest list contains alternative texts and their scores
+        // extract NBest list containing alternative texts and confidence scores
         JsonDocument doc = JsonDocument.Parse(json);
         var nbest = doc.RootElement.GetProperty("NBest").EnumerateArray()
                                    .Select(selector => new
@@ -264,24 +264,19 @@ public class VoiceInterpreter
             .ThenByDescending(x => x.Confidence)
             .FirstOrDefault();
 
-        // first if statement "?": returns null or pick.Text if it's not null
-        // second if statement "??": if the first is null, returns e.Result.Text
-        //pick?.Text ?? e.Text
-        var bestText = TextNormalizer.Normalize(pick?.Text ?? e.Text);  // <— apply lexicon/pipeline here
+        var bestText = TextNormalizer.Normalize(pick?.Text ?? e.Text);  // apply lexicon/pipeline here
         return bestText;
     }
 
     /// <summary>
-    /// Procesează textul final: cheamă CLU, routează comanda și o execută.
+    /// Processes the final text: calls CLU, routes the command and executes it.
     /// </summary>
     private async Task HandleResultAsync(string result)
     {
         var text = result.Trim(); 
         // this line here has the FINAL result
         _log.Info("Final: " + text);
-        //If the speech service is still listening and identifies no text,
-        //(e.g. the person does not speak or the speech is not recognized),
-        //we return without doing anything, so that we do not call CLU with empty text.
+        // ignore empty results to avoid unnecessary CLU calls
         try
         {
             if (!string.IsNullOrWhiteSpace(text))

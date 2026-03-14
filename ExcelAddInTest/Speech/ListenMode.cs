@@ -2,22 +2,22 @@
 using System;
 public enum ListenMode
 {
-    SingleUtterance, // se oprește după prima frază (silence detect)
-    Continuous       // rămâne pornit până îl oprești tu sau expiră un timer
+    SingleUtterance, // stops after the first phrase (silence detect)
+    Continuous       // stays on until you stop it or a timer expires
 }
 
 public sealed class VoiceListenOptions
 {
     public ListenMode Mode { get; set; } = ListenMode.Continuous;
 
-    // dacă vrei un auto-stop absolut (ex. 15s sau 30s)
+    // if you want an absolute auto-stop (e.g. 15s or 30s)
     public TimeSpan? AutoStopAfter { get; set; } = null;
 
-    // dacă vrei un „hard cap” când mergi manual (ex. max 30s)
+    // if you want a "hard cap" when going manual (e.g. max 30s)
     public TimeSpan? MaxDuration { get; set; } = TimeSpan.FromSeconds(30);
 
-    // limbă + sensibilitate la pauze
+    // language + sensitivity to pauses
     public string Language { get; set; } = Config.SpeechLanguage; // "en-US"
-    public int InitialSilenceTimeoutMs { get; set; } = 5000;  // cât aștepți până la primul sunet
-    public int EndSilenceTimeoutMs { get; set; } = 3000;  // câtă liniște înseamnă "sfârșit frază"
+    public int InitialSilenceTimeoutMs { get; set; } = 5000;  // how long to wait for the first sound
+    public int EndSilenceTimeoutMs { get; set; } = 3000;  // how much silence means "end of phrase"
 }

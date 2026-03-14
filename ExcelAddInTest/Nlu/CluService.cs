@@ -35,8 +35,7 @@ namespace ExcelAddInTest
             if (string.IsNullOrWhiteSpace(endpoint)) throw new ArgumentException("endpoint missing");
             if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("key missing");
 
-            ///Because of the older version of .NET that we use, set the ssl protocol to Tls12 
-            ///(needed by the azure services)
+            // Enforce TLS 1.2 required by Azure services for older .NET versions
             var handler = new HttpClientHandler
             {
                 SslProtocols = SslProtocols.Tls12
@@ -45,8 +44,7 @@ namespace ExcelAddInTest
             {
                 Timeout = TimeSpan.FromSeconds(30)
             };
-            ///used to set the option for our ConversationAnalysisClient class 
-            ///(we need to use the ssl protocol Tls12)
+            // Configure client to use the TLS 1.2 HTTP client
             var opts = new ConversationsClientOptions
             {
                 Retry =
@@ -66,8 +64,7 @@ namespace ExcelAddInTest
         }
      
         /// <summary>
-        /// Method analyzes sends the utterance to the clu model deployed and receives 
-        /// the top intent and recognized entities.
+        /// Analyzes the utterance using the deployed CLU model to receive the top intent and recognized entities.
         /// </summary>
         /// <param name="text">the utterance that is sent</param>
         /// <returns>NluResult entity that contains the information.</returns>

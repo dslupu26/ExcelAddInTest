@@ -51,11 +51,11 @@ namespace ExcelAddInTest
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            InitializeUserInterface(); // initializam meniul 
+            InitializeUserInterface(); // initialize the menu
             _excelCtx = SynchronizationContext.Current;
             
-            EnsureDebugPane(); //initializam panoul de debug
-            EnsureSettingsPane(); //initializam panoul de setari
+            EnsureDebugPane(); // initialize the debug pane
+            EnsureSettingsPane(); // initialize the settings pane
 
             //creating the logger
             var pathToDailyLog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder
@@ -69,7 +69,7 @@ namespace ExcelAddInTest
             //injecting application into the excel facade
             _excel = new ExcelApi.ExcelFacade(Application, _pane, _excelCtx);
             
-            InitializeServices(); // initalizam speech service si clu service
+            InitializeServices(); // initialize speech service and clu service
             
 
         }
@@ -104,7 +104,7 @@ namespace ExcelAddInTest
             }
         }
 
-        //add a toggle button in the right click meniu of a cell
+        // add a toggle button in the right-click menu of a cell
         private void CellCtxToggle_Click(CommandBarButton Ctrl, ref bool CancelDefault)
         {
             try
